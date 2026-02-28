@@ -1,0 +1,24 @@
+{
+  "name": "conq-infrastructure",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ConQ – AWS CDK Infrastructure as Code",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "cdk": "cdk",
+    "synth": "cdk synth",
+    "deploy": "cdk deploy --all",
+    "diff": "cdk diff",
+    "destroy": "cdk destroy --all"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.110.0",
+    "constructs": "^10.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "aws-cdk": "^2.110.0",
+    "typescript": "^5.3.0"
+  }
+}
