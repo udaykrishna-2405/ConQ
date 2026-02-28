@@ -25,7 +25,7 @@ export class UserRepository extends TenantRepository {
     const result = await dynamoDb.send(
       new QueryCommand({
         TableName: this.tableName,
-        IndexName: 'tenant-email-index',
+        IndexName: 'email-index',
         KeyConditionExpression: 'tenant_id = :tid AND email = :email',
         ExpressionAttributeValues: {
           ':tid': tenantId,
