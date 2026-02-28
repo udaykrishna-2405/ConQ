@@ -37,7 +37,7 @@ const Login: React.FC = () => {
     }
 
     if (result.meta.requestStatus === 'fulfilled') {
-      navigate('/dashboard');
+      navigate(isRegister ? '/onboarding' : '/dashboard');
     }
   };
 

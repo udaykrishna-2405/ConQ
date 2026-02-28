@@ -4,6 +4,7 @@ import {
   RegisterRequest,
   AuthResponse,
   User,
+  UpdateProfileRequest,
   NlpAnalyzeRequest,
   NlpResult,
   PredictionRequest,
@@ -58,6 +59,11 @@ export const authApi = {
 
   getProfile: async (): Promise<User> => {
     const res = await apiClient.get('/users/me');
+    return res.data;
+  },
+
+  updateProfile: async (data: UpdateProfileRequest): Promise<User> => {
+    const res = await apiClient.put('/users/me', data);
     return res.data;
   },
 };

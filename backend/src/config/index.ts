@@ -24,4 +24,8 @@ export const config = {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379', 10),
   },
+  ses: {
+    fromEmail: process.env.SES_FROM_EMAIL || 'noreply@conq.app',
+    region: process.env.SES_REGION || process.env.AWS_REGION || 'ap-south-1',
+  },
 };

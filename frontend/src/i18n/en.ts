@@ -1,0 +1,72 @@
+const en = {
+  // Nav
+  'nav.brand': 'ConQ',
+  'nav.subtitle': 'AI Growth OS',
+  'nav.dashboard': 'Dashboard',
+  'nav.nlp': 'NLP Analyzer',
+  'nav.predict': 'Virality Predictor',
+  'nav.trends': 'Trends',
+  'nav.logout': 'Logout',
+
+  // Login
+  'login.title': 'ConQ',
+  'login.tagline': 'AI-Powered Growth Operating System',
+  'login.signIn': 'Sign In',
+  'login.createAccount': 'Create Account',
+  'login.email': 'Email',
+  'login.password': 'Password',
+  'login.name': 'Full Name',
+  'login.tenantId': 'Organization ID',
+  'login.pleaseWait': 'Please wait...',
+  'login.noAccount': "Don't have an account?",
+  'login.hasAccount': 'Already have an account?',
+  'login.emailPlaceholder': 'you@example.com',
+  'login.passwordPlaceholder': 'Min 8 characters',
+  'login.namePlaceholder': 'Your full name',
+  'login.tenantPlaceholder': 'Your org tenant ID',
+
+  // Dashboard
+  'dashboard.title': 'Analytics Dashboard',
+  'dashboard.subtitle': 'Cross-platform performance overview',
+  'dashboard.generated': 'Generated',
+  'dashboard.exportCsv': 'Export CSV',
+  'dashboard.totalReach': 'Total Reach',
+  'dashboard.totalEngagements': 'Total Engagements',
+  'dashboard.engagementRate': 'Engagement Rate',
+  'dashboard.contentPublished': 'Content Published',
+  'dashboard.reachSubtitle': 'YouTube views + Instagram reach',
+  'dashboard.engagementSubtitle': 'Likes, comments, shares, saves',
+  'dashboard.rateSubtitle': 'Weighted cross-platform average',
+  'dashboard.loading': 'Loading dashboard...',
+
+  // Onboarding
+  'onboarding.welcome': 'Welcome to ConQ',
+  'onboarding.subtitle': "Let's set up your creator profile in 3 quick steps",
+  'onboarding.platforms': 'Platforms',
+  'onboarding.niche': 'Niche',
+  'onboarding.goals': 'Goals',
+  'onboarding.connectPlatforms': 'Connect Your Platforms',
+  'onboarding.connectDesc': 'Link your YouTube channel and/or Instagram account to start tracking performance.',
+  'onboarding.youtubeLabel': 'YouTube Channel ID',
+  'onboarding.instagramLabel': 'Instagram Username',
+  'onboarding.selectNiche': 'Select Your Content Niche',
+  'onboarding.nicheDesc': 'Choose up to 3 categories that best describe your content.',
+  'onboarding.selectGoals': 'What Are Your Goals?',
+  'onboarding.goalsDesc': 'Select up to 3 goals so ConQ can personalize your experience.',
+  'onboarding.next': 'Next',
+  'onboarding.back': 'Back',
+  'onboarding.getStarted': 'Get Started',
+  'onboarding.saving': 'Saving...',
+  'onboarding.selected': 'selected',
+
+  // Common
+  'common.videos': 'videos',
+  'common.posts': 'posts',
+  'common.subscribers': 'subscribers',
+  'common.followers': 'followers',
+  'common.totalViews': 'total views',
+  'common.totalReach': 'total reach',
+  'common.avgEngagement': 'avg engagement',
+};
+
+export default en;

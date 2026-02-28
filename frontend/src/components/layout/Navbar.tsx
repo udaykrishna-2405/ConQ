@@ -2,12 +2,14 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useAppDispatch';
 import { logout } from '../../store/slices/authSlice';
+import { useI18n } from '../../i18n';
 
 const Navbar: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAppSelector((state) => state.auth.user);
+  const { language, setLanguage, t } = useI18n();
 
   const handleLogout = () => {
     dispatch(logout());
@@ -19,26 +21,33 @@ const Navbar: React.FC = () => {
   return (
     <nav className="navbar">
       <div className="navbar-brand">
-        <Link to="/dashboard">ConQ</Link>
-        <span className="navbar-subtitle">AI Growth OS</span>
+        <Link to="/dashboard">{t('nav.brand')}</Link>
+        <span className="navbar-subtitle">{t('nav.subtitle')}</span>
       </div>
 
       <div className="navbar-links">
         <Link to="/dashboard" className={location.pathname === '/dashboard' ? 'active' : ''}>
-          Dashboard
+          {t('nav.dashboard')}
         </Link>
         <Link to="/nlp" className={location.pathname === '/nlp' ? 'active' : ''}>
-          NLP Analyzer
+          {t('nav.nlp')}
         </Link>
         <Link to="/predict" className={location.pathname === '/predict' ? 'active' : ''}>
-          Virality Predictor
+          {t('nav.predict')}
         </Link>
         <Link to="/trends" className={location.pathname === '/trends' ? 'active' : ''}>
-          Trends
+          {t('nav.trends')}
         </Link>
       </div>
 
       <div className="navbar-user">
+        <button
+          className="lang-toggle"
+          onClick={() => setLanguage(language === 'en' ? 'hi' : 'en')}
+          title={language === 'en' ? 'हिन्दी में बदलें' : 'Switch to English'}
+        >
+          {language === 'en' ? 'हिन्दी' : 'EN'}
+        </button>
         {user && (
           <>
             <span className="user-name">{user.name}</span>
@@ -46,7 +55,7 @@ const Navbar: React.FC = () => {
           </>
         )}
         <button onClick={handleLogout} className="btn-logout">
-          Logout
+          {t('nav.logout')}
         </button>
       </div>
     </nav>

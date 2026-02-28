@@ -1,12 +1,18 @@
-// YouTube Mock Integration
-// Simulates YouTube Data API v3 responses for channel and video metadata.
+// YouTube Platform Integration
+// Uses YouTube Data API v3 when YOUTUBE_API_KEY is configured.
+// Falls back to deterministic mock data when API key is absent.
 //
-// In production, replace with actual YouTube Data API calls:
-//   - channels.list (channel metrics)
-//   - search.list (video discovery)
-//   - videos.list (video details + stats)
+// Required env vars for real mode:
+//   YOUTUBE_API_KEY – YouTube Data API v3 key (stored in Secrets Manager in prod)
 //
-// API Key stored in Secrets Manager, not in code.
+// YouTube Data API endpoints used:
+//   - channels.list   (channel metrics)
+//   - search.list     (video discovery)
+//   - videos.list     (video details + stats)
+
+import https from 'https';
+
+// ─── Interfaces ──────────────────────────────────────────────────────────────
 
 export interface YouTubeChannel {
   channelId: string;
@@ -34,7 +40,118 @@ export interface YouTubeVideo {
   engagementRate: number;
 }
 
-// Mock channel data pool
+// ─── Real YouTube Data API v3 Client ─────────────────────────────────────────
+
+const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
+const YT_BASE = 'https://www.googleapis.com/youtube/v3';
+
+/** Simple HTTPS GET that returns parsed JSON. */
+function ytGet<T>(url: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    https.get(url, (res) => {
+      let data = '';
+      res.on('data', (chunk: string) => (data += chunk));
+      res.on('end', () => {
+        try {
+          resolve(JSON.parse(data) as T);
+        } catch (err) {
+          reject(new Error(`YouTube API JSON parse error: ${err}`));
+        }
+      });
+      res.on('error', reject);
+    }).on('error', reject);
+  });
+}
+
+interface YTChannelListResponse {
+  items?: Array<{
+    id: string;
+    snippet: { title: string; thumbnails: { default: { url: string } } };
+    statistics: { subscriberCount: string; videoCount: string; viewCount: string };
+  }>;
+}
+
+interface YTSearchListResponse {
+  items?: Array<{
+    id: { videoId: string };
+    snippet: { title: string; description: string; publishedAt: string; thumbnails: { high: { url: string } } };
+  }>;
+}
+
+interface YTVideoListResponse {
+  items?: Array<{
+    id: string;
+    snippet: { title: string; description: string; publishedAt: string; tags?: string[]; thumbnails: { high: { url: string } } };
+    statistics: { viewCount: string; likeCount: string; commentCount: string };
+    contentDetails: { duration: string };
+  }>;
+}
+
+/** Fetch channel metrics from YouTube Data API. */
+async function realFetchChannel(channelId: string): Promise<YouTubeChannel> {
+  const url = `${YT_BASE}/channels?part=snippet,statistics&id=${encodeURIComponent(channelId)}&key=${YOUTUBE_API_KEY}`;
+  const resp = await ytGet<YTChannelListResponse>(url);
+
+  if (!resp.items || resp.items.length === 0) {
+    throw new Error(`YouTube channel not found: ${channelId}`);
+  }
+
+  const ch = resp.items[0];
+  return {
+    channelId: ch.id,
+    title: ch.snippet.title,
+    subscriberCount: parseInt(ch.statistics.subscriberCount, 10) || 0,
+    videoCount: parseInt(ch.statistics.videoCount, 10) || 0,
+    viewCount: parseInt(ch.statistics.viewCount, 10) || 0,
+    thumbnailUrl: ch.snippet.thumbnails.default.url,
+  };
+}
+
+/** Fetch recent videos from YouTube Data API. */
+async function realFetchVideos(channelId: string, count: number): Promise<YouTubeVideo[]> {
+  // Step 1: search for recent videos on the channel
+  const searchUrl = `${YT_BASE}/search?part=snippet&channelId=${encodeURIComponent(channelId)}&type=video&order=date&maxResults=${count}&key=${YOUTUBE_API_KEY}`;
+  const searchResp = await ytGet<YTSearchListResponse>(searchUrl);
+
+  if (!searchResp.items || searchResp.items.length === 0) {
+    return [];
+  }
+
+  // Step 2: get full stats for found videos
+  const videoIds = searchResp.items.map((i) => i.id.videoId).join(',');
+  const statsUrl = `${YT_BASE}/videos?part=snippet,statistics,contentDetails&id=${videoIds}&key=${YOUTUBE_API_KEY}`;
+  const statsResp = await ytGet<YTVideoListResponse>(statsUrl);
+
+  if (!statsResp.items) return [];
+
+  return statsResp.items.map((v) => {
+    const viewCount = parseInt(v.statistics.viewCount, 10) || 0;
+    const likeCount = parseInt(v.statistics.likeCount, 10) || 0;
+    const commentCount = parseInt(v.statistics.commentCount, 10) || 0;
+    // YouTube API doesn't expose share count directly
+    const shareCount = 0;
+
+    const totalEngagement = likeCount + commentCount + shareCount;
+    const engagementRate = viewCount > 0
+      ? Math.round((totalEngagement / viewCount) * 10000) / 10000
+      : 0;
+
+    return {
+      videoId: v.id,
+      title: v.snippet.title,
+      description: v.snippet.description,
+      publishedAt: v.snippet.publishedAt,
+      thumbnailUrl: v.snippet.thumbnails.high.url,
+      tags: v.snippet.tags || [],
+      duration: v.contentDetails.duration,
+      stats: { viewCount, likeCount, commentCount, shareCount },
+      engagementRate,
+    };
+  });
+}
+
+// ─── Mock Data (used when YOUTUBE_API_KEY is not set) ────────────────────────
+
 const MOCK_CHANNELS: YouTubeChannel[] = [
   {
     channelId: 'UC_mock_tech_01',
@@ -62,7 +179,6 @@ const MOCK_CHANNELS: YouTubeChannel[] = [
   },
 ];
 
-// Mock video templates
 const VIDEO_TEMPLATES = [
   { titleTemplate: 'Top 10 {topic} Tips for Beginners', category: 'education' },
   { titleTemplate: '{topic} Complete Guide 2026', category: 'education' },
@@ -105,47 +221,77 @@ const generateMockVideo = (channelId: string, index: number): YouTubeVideo => {
     thumbnailUrl: `https://placeholder.conq/yt/video/${channelId}_${index}.jpg`,
     tags: [topic.toLowerCase(), template.category, 'india', 'hindi'],
     duration: `PT${10 + Math.floor(Math.random() * 20)}M${Math.floor(Math.random() * 60)}S`,
-    stats: {
-      viewCount,
-      likeCount,
-      commentCount,
-      shareCount,
-    },
+    stats: { viewCount, likeCount, commentCount, shareCount },
     engagementRate: Math.round(((likeCount + commentCount + shareCount) / viewCount) * 10000) / 10000,
   };
 };
 
-/**
- * Fetches channel metrics for a given tenant.
- * In production: YouTube Data API channels.list
- */
-export const fetchChannelMetrics = (tenantId: string): YouTubeChannel => {
-  // Select a mock channel based on tenant hash
+function mockFetchChannel(tenantId: string): YouTubeChannel {
   const index = tenantId.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % MOCK_CHANNELS.length;
   return { ...MOCK_CHANNELS[index] };
+}
+
+function mockFetchVideos(tenantId: string, count: number): YouTubeVideo[] {
+  const channelId = mockFetchChannel(tenantId).channelId;
+  return Array.from({ length: count }, (_, i) => generateMockVideo(channelId, i));
+}
+
+// ─── Public API (auto-selects real vs mock) ──────────────────────────────────
+
+/**
+ * Fetches channel metrics for a given tenant.
+ * Uses YouTube Data API when YOUTUBE_API_KEY is set; mock data otherwise.
+ * @param tenantId  Tenant identifier
+ * @param channelId Optional YouTube channel ID (required for real API mode)
+ */
+export const fetchChannelMetrics = async (
+  tenantId: string,
+  channelId?: string,
+): Promise<YouTubeChannel> => {
+  if (YOUTUBE_API_KEY && channelId) {
+    try {
+      return await realFetchChannel(channelId);
+    } catch (err) {
+      console.warn('YouTube API failed, falling back to mock:', err);
+    }
+  }
+  return mockFetchChannel(tenantId);
 };
 
 /**
  * Fetches video metadata for a channel.
- * In production: YouTube Data API search.list + videos.list
+ * Uses YouTube Data API when YOUTUBE_API_KEY is set; mock data otherwise.
  */
-export const fetchVideoMetrics = (tenantId: string, count = 10): YouTubeVideo[] => {
-  const channelId = fetchChannelMetrics(tenantId).channelId;
-  return Array.from({ length: count }, (_, i) => generateMockVideo(channelId, i));
+export const fetchVideoMetrics = async (
+  tenantId: string,
+  count = 10,
+  channelId?: string,
+): Promise<YouTubeVideo[]> => {
+  if (YOUTUBE_API_KEY && channelId) {
+    try {
+      return await realFetchVideos(channelId, count);
+    } catch (err) {
+      console.warn('YouTube API failed, falling back to mock:', err);
+    }
+  }
+  return mockFetchVideos(tenantId, count);
 };
 
 /**
  * Fetches aggregated stats across all videos.
  */
-export const fetchAggregatedStats = (tenantId: string): {
+export const fetchAggregatedStats = async (
+  tenantId: string,
+  channelId?: string,
+): Promise<{
   totalViews: number;
   totalLikes: number;
   totalComments: number;
   totalShares: number;
   avgEngagementRate: number;
   videoCount: number;
-} => {
-  const videos = fetchVideoMetrics(tenantId, 20);
+}> => {
+  const videos = await fetchVideoMetrics(tenantId, 20, channelId);
 
   const totals = videos.reduce(
     (acc, v) => ({
@@ -163,7 +309,12 @@ export const fetchAggregatedStats = (tenantId: string): {
     totalLikes: totals.likes,
     totalComments: totals.comments,
     totalShares: totals.shares,
-    avgEngagementRate: Math.round((totals.engagementSum / videos.length) * 10000) / 10000,
+    avgEngagementRate: videos.length > 0
+      ? Math.round((totals.engagementSum / videos.length) * 10000) / 10000
+      : 0,
     videoCount: videos.length,
   };
 };
+
+/** Returns true if a real YouTube API key is configured. */
+export const isRealApiConfigured = (): boolean => !!YOUTUBE_API_KEY;

@@ -1,6 +1,13 @@
 // User Model – DynamoDB Schema
 // All models include tenant_id as partition key for multi-tenant isolation.
 
+export interface OnboardingData {
+  youtubeChannelId?: string;
+  instagramHandle?: string;
+  contentNiche?: string[];
+  goals?: string[];
+}
+
 export interface User {
   tenant_id: string;       // Partition key
   user_id: string;         // Sort key
@@ -9,6 +16,10 @@ export interface User {
   role: 'admin' | 'creator' | 'viewer';
   tier: 'free' | 'pro' | 'enterprise';
   platforms: string[];     // Connected platforms: ['youtube', 'instagram']
+  onboarding?: OnboardingData;
+  onboarding_completed?: boolean;
+  password_hash?: string;  // PBKDF2 hash (mock auth only; Cognito in production)
+  password_salt?: string;  // PBKDF2 salt (mock auth only; Cognito in production)
   created_at: string;      // ISO 8601
   updated_at: string;      // ISO 8601
 }

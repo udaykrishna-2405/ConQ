@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
+import Onboarding from './pages/Onboarding';
 import Dashboard from './pages/Dashboard';
 import NlpAnalyzer from './pages/NlpAnalyzer';
 import ViralityPredictor from './pages/ViralityPredictor';
@@ -13,6 +14,14 @@ const App: React.FC = () => {
     <div className="app">
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route
+          path="/onboarding"
+          element={
+            <ProtectedRoute>
+              <Onboarding />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/dashboard"
           element={

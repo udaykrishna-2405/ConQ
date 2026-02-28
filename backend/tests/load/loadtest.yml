@@ -1,0 +1,254 @@
+# ConQ Load Testing Configuration
+# Uses Artillery (https://artillery.io) for Lambda endpoint load testing.
+#
+# Install: npm install -g artillery
+# Run:     artillery run tests/load/loadtest.yml
+# Report:  artillery run tests/load/loadtest.yml --output report.json && artillery report report.json
+
+config:
+  target: "{{ $processEnvironment.API_BASE_URL }}"
+  defaults:
+    headers:
+      Content-Type: "application/json"
+  phases:
+    # Warm-up: 5 req/s for 30 seconds
+    - duration: 30
+      arrivalRate: 5
+      name: "Warm-up"
+    # Ramp-up: 5 → 25 req/s over 60 seconds
+    - duration: 60
+      arrivalRate: 5
+      rampTo: 25
+      name: "Ramp-up"
+    # Sustained: 25 req/s for 120 seconds
+    - duration: 120
+      arrivalRate: 25
+      name: "Sustained load"
+    # Spike: 50 req/s for 30 seconds
+    - duration: 30
+      arrivalRate: 50
+      name: "Spike test"
+  variables:
+    tenantId: "load-test-tenant"
+    testEmail: "loadtest-{{ $randomNumber(1000, 9999) }}@test.com"
+
+scenarios:
+  # ── Auth Flow: Register → Login → Refresh ──
+  - name: "Auth flow"
+    weight: 3
+    flow:
+      - post:
+          url: "/auth/register"
+          json:
+            email: "lt-{{ $randomNumber(100000, 999999) }}@test.com"
+            password: "LoadTest123!"
+            name: "Load Test User"
+            tenantId: "{{ tenantId }}"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+            - json: "$.refreshToken"
+              as: "refreshToken"
+          expect:
+            - statusCode: 200
+
+      - post:
+          url: "/auth/login"
+          json:
+            email: "lt-{{ $randomNumber(100000, 999999) }}@test.com"
+            password: "LoadTest123!"
+            tenantId: "{{ tenantId }}"
+          expect:
+            - statusCode:
+                - 200
+                - 401
+
+      - post:
+          url: "/auth/refresh"
+          json:
+            refreshToken: "{{ refreshToken }}"
+          expect:
+            - statusCode:
+                - 200
+                - 401
+
+  # ── NLP Analysis ──
+  - name: "NLP analyze"
+    weight: 4
+    flow:
+      - post:
+          url: "/auth/register"
+          json:
+            email: "nlp-{{ $randomNumber(100000, 999999) }}@test.com"
+            password: "LoadTest123!"
+            name: "NLP Tester"
+            tenantId: "{{ tenantId }}"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+
+      - post:
+          url: "/nlp/analyze"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            text: "This is a great video about AI and machine learning in India! Check out my latest tutorial on React and Python development."
+            platform: "youtube"
+          expect:
+            - statusCode: 200
+
+      - post:
+          url: "/nlp/analyze"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            text: "यह वीडियो बहुत अच्छा है! AI और मशीन लर्निंग के बारे में जानें।"
+            platform: "instagram"
+          expect:
+            - statusCode: 200
+
+  # ── Virality Prediction ──
+  - name: "Virality prediction"
+    weight: 3
+    flow:
+      - post:
+          url: "/auth/register"
+          json:
+            email: "pred-{{ $randomNumber(100000, 999999) }}@test.com"
+            password: "LoadTest123!"
+            name: "Prediction Tester"
+            tenantId: "{{ tenantId }}"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+
+      - post:
+          url: "/prediction/virality"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            title: "10 AI Tools Every Creator Should Use in 2025"
+            description: "A comprehensive guide to AI-powered content creation tools"
+            tags: ["ai", "creator", "tools", "2025"]
+            platform: "youtube"
+            historicalEngagementRate: 0.045
+            followerCount: 50000
+          expect:
+            - statusCode: 200
+
+  # ── Trends ──
+  - name: "Trends query"
+    weight: 5
+    flow:
+      - post:
+          url: "/auth/register"
+          json:
+            email: "trend-{{ $randomNumber(100000, 999999) }}@test.com"
+            password: "LoadTest123!"
+            name: "Trends Tester"
+            tenantId: "{{ tenantId }}"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+
+      - get:
+          url: "/trends"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+      - get:
+          url: "/trends?region=India&category=viral&limit=5"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+      - get:
+          url: "/trends?category=emerging&language=hi"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+  # ── Analytics Dashboard ──
+  - name: "Analytics dashboard"
+    weight: 5
+    flow:
+      - post:
+          url: "/auth/register"
+          json:
+            email: "dash-{{ $randomNumber(100000, 999999) }}@test.com"
+            password: "LoadTest123!"
+            name: "Dashboard Tester"
+            tenantId: "{{ tenantId }}"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+
+      - get:
+          url: "/analytics/dashboard"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+  # ── User Profile ──
+  - name: "User profile CRUD"
+    weight: 2
+    flow:
+      - post:
+          url: "/auth/register"
+          json:
+            email: "user-{{ $randomNumber(100000, 999999) }}@test.com"
+            password: "LoadTest123!"
+            name: "Profile Tester"
+            tenantId: "{{ tenantId }}"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+
+      - get:
+          url: "/users/me"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+      - put:
+          url: "/users/me"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            name: "Updated Name"
+            platforms: ["youtube", "instagram"]
+            onboarding:
+              youtubeChannelId: "UCtest123"
+              instagramHandle: "test_creator"
+              contentNiche: ["Tech & Gadgets"]
+              goals: ["Grow subscribers/followers"]
+            onboardingCompleted: true
+          expect:
+            - statusCode: 200
+
+  # ── Unauthenticated Rejection ──
+  - name: "Auth rejection"
+    weight: 1
+    flow:
+      - get:
+          url: "/analytics/dashboard"
+          expect:
+            - statusCode: 401
+
+      - get:
+          url: "/users/me"
+          expect:
+            - statusCode: 401
+
+      - post:
+          url: "/nlp/analyze"
+          json:
+            text: "test"
+          expect:
+            - statusCode: 401

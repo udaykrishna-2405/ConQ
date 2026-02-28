@@ -3,6 +3,13 @@
 
 // ── Auth ──
 
+export interface OnboardingData {
+  youtubeChannelId?: string;
+  instagramHandle?: string;
+  contentNiche?: string[];
+  goals?: string[];
+}
+
 export interface User {
   userId: string;
   tenantId: string;
@@ -11,6 +18,15 @@ export interface User {
   role: 'admin' | 'creator' | 'viewer';
   tier: 'free' | 'pro' | 'enterprise';
   platforms: string[];
+  onboarding?: OnboardingData | null;
+  onboardingCompleted?: boolean;
+}
+
+export interface UpdateProfileRequest {
+  name?: string;
+  platforms?: string[];
+  onboarding?: OnboardingData;
+  onboardingCompleted?: boolean;
 }
 
 export interface LoginRequest {

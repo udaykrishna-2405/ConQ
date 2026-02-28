@@ -1,18 +1,14 @@
 // Auth Service
 // Business logic for authentication and user management.
-// Mock implementation for local dev. In production, replace with Cognito SDK calls.
-// TODO: Replace mock auth with AWS Cognito AdminInitiateAuth / AdminCreateUser
+// Credentials are stored alongside the User record in DynamoDB (password_hash, password_salt).
+// In production, replace with Cognito SDK calls (AdminInitiateAuth / AdminCreateUser).
 
 import { v4 as uuidv4 } from 'uuid';
 import { UserRepository } from './userRepository';
 import { User } from '../models/schemas';
-import { generateToken } from '../utils/jwt';
+import { generateTokenPair, rotateRefreshToken, revokeAllUserTokens, TokenPair } from '../utils/jwt';
 import { hashPassword, verifyPassword } from '../utils/password';
 import { AppError, NotFoundError } from '../middleware/errorHandler';
-
-// In-memory credential store for mock auth (replaces Cognito in dev).
-// In production, Cognito manages credentials entirely.
-const credentialStore = new Map<string, { hash: string; salt: string; userId: string; tenantId: string }>();
 
 export class AuthService {
   private userRepo: UserRepository;
@@ -22,8 +18,8 @@ export class AuthService {
   }
 
   /**
-   * Register a new user. Creates credentials and user profile.
-   * In production: Cognito AdminCreateUser + DynamoDB user record.
+   * Register a new user. Creates user record with hashed credentials in DynamoDB.
+   * Returns access + refresh token pair.
    */
   async register(params: {
     email: string;
@@ -32,20 +28,19 @@ export class AuthService {
     tenantId?: string;
     role?: 'admin' | 'creator' | 'viewer';
     tier?: 'free' | 'pro' | 'enterprise';
-  }): Promise<{ user: User; token: string }> {
+  }): Promise<{ user: User; tokens: TokenPair }> {
     const tenantId = params.tenantId || `tenant_${uuidv4().slice(0, 8)}`;
     const userId = uuidv4();
     const now = new Date().toISOString();
 
     // Check if email already exists for this tenant
-    const credKey = `${tenantId}:${params.email}`;
-    if (credentialStore.has(credKey)) {
+    const existingUser = await this.userRepo.getUserByEmail(tenantId, params.email);
+    if (existingUser) {
       throw new AppError(409, 'User with this email already exists', 'USER_EXISTS');
     }
 
-    // Hash password (mock Cognito credential storage)
+    // Hash password
     const { hash, salt } = hashPassword(params.password);
-    credentialStore.set(credKey, { hash, salt, userId, tenantId });
 
     const user: User = {
       tenant_id: tenantId,
@@ -55,13 +50,15 @@ export class AuthService {
       role: params.role || 'creator',
       tier: params.tier || 'free',
       platforms: [],
+      password_hash: hash,
+      password_salt: salt,
       created_at: now,
       updated_at: now,
     };
 
     await this.userRepo.createUser(user);
 
-    const token = generateToken({
+    const tokens = generateTokenPair({
       userId: user.user_id,
       tenantId: user.tenant_id,
       email: user.email,
@@ -69,36 +66,28 @@ export class AuthService {
       tier: user.tier,
     });
 
-    return { user, token };
+    return { user: this.sanitizeUser(user), tokens };
   }
 
   /**
-   * Login with email and password. Returns JWT token.
-   * In production: Cognito AdminInitiateAuth returns Cognito tokens.
+   * Login with email and password. Returns access + refresh token pair.
    */
   async login(params: {
     email: string;
     password: string;
     tenantId: string;
-  }): Promise<{ user: User; token: string }> {
-    const credKey = `${params.tenantId}:${params.email}`;
-    const creds = credentialStore.get(credKey);
+  }): Promise<{ user: User; tokens: TokenPair }> {
+    const user = await this.userRepo.getUserByEmail(params.tenantId, params.email);
 
-    if (!creds) {
+    if (!user || !user.password_hash || !user.password_salt) {
       throw new AppError(401, 'Invalid email or password', 'INVALID_CREDENTIALS');
     }
 
-    if (!verifyPassword(params.password, creds.hash, creds.salt)) {
+    if (!verifyPassword(params.password, user.password_hash, user.password_salt)) {
       throw new AppError(401, 'Invalid email or password', 'INVALID_CREDENTIALS');
     }
 
-    const user = await this.userRepo.getUserById(params.tenantId, creds.userId);
-
-    if (!user) {
-      throw new NotFoundError('User');
-    }
-
-    const token = generateToken({
+    const tokens = generateTokenPair({
       userId: user.user_id,
       tenantId: user.tenant_id,
       email: user.email,
@@ -106,7 +95,26 @@ export class AuthService {
       tier: user.tier,
     });
 
-    return { user, token };
+    return { user: this.sanitizeUser(user), tokens };
+  }
+
+  /**
+   * Refresh an access token using a valid refresh token.
+   * Implements token rotation: old refresh token is revoked, new pair issued.
+   */
+  async refreshToken(refreshToken: string): Promise<TokenPair> {
+    const newTokens = rotateRefreshToken(refreshToken);
+    if (!newTokens) {
+      throw new AppError(401, 'Invalid or expired refresh token', 'REFRESH_TOKEN_INVALID');
+    }
+    return newTokens;
+  }
+
+  /**
+   * Logout: revoke all refresh tokens for the user.
+   */
+  async logout(userId: string): Promise<void> {
+    revokeAllUserTokens(userId);
   }
 
   /**
@@ -117,7 +125,7 @@ export class AuthService {
     if (!user) {
       throw new NotFoundError('User');
     }
-    return user;
+    return this.sanitizeUser(user);
   }
 
   /**
@@ -126,9 +134,22 @@ export class AuthService {
   async updateProfile(
     tenantId: string,
     userId: string,
-    updates: { name?: string; platforms?: string[] }
+    updates: { name?: string; platforms?: string[]; onboarding?: Record<string, unknown>; onboardingCompleted?: boolean }
   ): Promise<User> {
-    await this.userRepo.updateUser(tenantId, userId, updates);
+    const mapped: Record<string, unknown> = {};
+    if (updates.name !== undefined) mapped.name = updates.name;
+    if (updates.platforms !== undefined) mapped.platforms = updates.platforms;
+    if (updates.onboarding !== undefined) mapped.onboarding = updates.onboarding;
+    if (updates.onboardingCompleted !== undefined) mapped.onboarding_completed = updates.onboardingCompleted;
+    await this.userRepo.updateUser(tenantId, userId, mapped as Partial<User>);
     return this.getProfile(tenantId, userId);
+  }
+
+  /**
+   * Strip sensitive fields (password_hash, password_salt) before returning user data.
+   */
+  private sanitizeUser(user: User): User {
+    const { password_hash: _h, password_salt: _s, ...safeUser } = user;
+    return safeUser as User;
   }
 }

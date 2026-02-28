@@ -134,14 +134,15 @@ export class AnalyticsService {
    * ranks top content, and scores trend alignment.
    */
   async getDashboard(tenantId: string): Promise<DashboardResponse> {
-    // Fetch platform data
-    const ytChannel = youtube.fetchChannelMetrics(tenantId);
-    const ytAggregated = youtube.fetchAggregatedStats(tenantId);
-    const ytVideos = youtube.fetchVideoMetrics(tenantId, 10);
-
-    const igProfile = instagram.fetchProfileMetrics(tenantId);
-    const igAggregated = instagram.fetchAggregatedPostStats(tenantId);
-    const igPosts = instagram.fetchPostMetrics(tenantId, 10);
+    // Fetch platform data (real API when configured, mock otherwise)
+    const [ytChannel, ytAggregated, ytVideos, igProfile, igAggregated, igPosts] = await Promise.all([
+      youtube.fetchChannelMetrics(tenantId),
+      youtube.fetchAggregatedStats(tenantId),
+      youtube.fetchVideoMetrics(tenantId, 10),
+      instagram.fetchProfileMetrics(tenantId),
+      instagram.fetchAggregatedPostStats(tenantId),
+      instagram.fetchPostMetrics(tenantId, 10),
+    ]);
 
     // Build platform summaries
     const youtubeSummary: YouTubeSummary = {
@@ -194,9 +195,9 @@ export class AnalyticsService {
    */
   private computeUnifiedMetrics(
     ytChannel: youtube.YouTubeChannel,
-    ytAgg: ReturnType<typeof youtube.fetchAggregatedStats>,
+    ytAgg: Awaited<ReturnType<typeof youtube.fetchAggregatedStats>>,
     igProfile: instagram.InstagramProfile,
-    igAgg: ReturnType<typeof instagram.fetchAggregatedPostStats>
+    igAgg: Awaited<ReturnType<typeof instagram.fetchAggregatedPostStats>>
   ): UnifiedMetrics {
     const ytEngagements = ytAgg.totalLikes + ytAgg.totalComments + ytAgg.totalShares;
     const igEngagements = igAgg.totalLikes + igAgg.totalComments + igAgg.totalShares + igAgg.totalSaves;

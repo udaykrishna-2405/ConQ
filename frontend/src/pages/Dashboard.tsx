@@ -7,6 +7,7 @@ import PlatformBreakdownChart from '../components/dashboard/PlatformBreakdownCha
 import EngagementChart from '../components/dashboard/EngagementChart';
 import TopContentTable from '../components/dashboard/TopContentTable';
 import TrendAlignmentList from '../components/dashboard/TrendAlignmentList';
+import { dashboardToCsv, downloadCsv } from '../utils/exportCsv';
 
 const Dashboard: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -30,13 +31,26 @@ const Dashboard: React.FC = () => {
 
   const { unified, platforms, topContent, trendAlignment } = data;
 
+  const handleExportCsv = () => {
+    const csv = dashboardToCsv(data);
+    const date = new Date().toISOString().slice(0, 10);
+    downloadCsv(csv, `conq-analytics-${date}.csv`);
+  };
+
   return (
     <div className="page-container">
       <div className="page-header">
-        <h2>Analytics Dashboard</h2>
-        <p className="page-subtitle">
-          Cross-platform performance overview | Generated {new Date(data.generatedAt).toLocaleString()}
-        </p>
+        <div className="page-header-row">
+          <div>
+            <h2>Analytics Dashboard</h2>
+            <p className="page-subtitle">
+              Cross-platform performance overview | Generated {new Date(data.generatedAt).toLocaleString()}
+            </p>
+          </div>
+          <button className="btn-secondary" onClick={handleExportCsv}>
+            Export CSV
+          </button>
+        </div>
       </div>
 
       {/* Metric Cards Row */}

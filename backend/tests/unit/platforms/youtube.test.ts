@@ -1,4 +1,4 @@
-// YouTube Mock Integration Tests
+// YouTube Platform Integration Tests
 
 import {
   fetchChannelMetrics,
@@ -6,12 +6,12 @@ import {
   fetchAggregatedStats,
 } from '../../../src/services/platforms/youtube';
 
-describe('YouTube Mock Integration', () => {
+describe('YouTube Platform Integration', () => {
   const tenantId = 'tenant_test_yt_001';
 
   describe('fetchChannelMetrics', () => {
-    it('should return a channel with all required fields', () => {
-      const channel = fetchChannelMetrics(tenantId);
+    it('should return a channel with all required fields', async () => {
+      const channel = await fetchChannelMetrics(tenantId);
 
       expect(channel).toHaveProperty('channelId');
       expect(channel).toHaveProperty('title');
@@ -21,25 +21,25 @@ describe('YouTube Mock Integration', () => {
       expect(channel).toHaveProperty('thumbnailUrl');
     });
 
-    it('should return positive metrics', () => {
-      const channel = fetchChannelMetrics(tenantId);
+    it('should return positive metrics', async () => {
+      const channel = await fetchChannelMetrics(tenantId);
 
       expect(channel.subscriberCount).toBeGreaterThan(0);
       expect(channel.videoCount).toBeGreaterThan(0);
       expect(channel.viewCount).toBeGreaterThan(0);
     });
 
-    it('should return consistent results for the same tenant', () => {
-      const ch1 = fetchChannelMetrics(tenantId);
-      const ch2 = fetchChannelMetrics(tenantId);
+    it('should return consistent results for the same tenant', async () => {
+      const ch1 = await fetchChannelMetrics(tenantId);
+      const ch2 = await fetchChannelMetrics(tenantId);
 
       expect(ch1.channelId).toBe(ch2.channelId);
       expect(ch1.title).toBe(ch2.title);
     });
 
-    it('should return different channels for different tenants', () => {
-      const ch1 = fetchChannelMetrics('tenant_a');
-      const ch2 = fetchChannelMetrics('tenant_b');
+    it('should return different channels for different tenants', async () => {
+      const ch1 = await fetchChannelMetrics('tenant_a');
+      const ch2 = await fetchChannelMetrics('tenant_b');
 
       // Different tenant hashes may or may not map to different channels,
       // but the function should not throw
@@ -49,18 +49,18 @@ describe('YouTube Mock Integration', () => {
   });
 
   describe('fetchVideoMetrics', () => {
-    it('should return the requested number of videos', () => {
-      const videos = fetchVideoMetrics(tenantId, 5);
+    it('should return the requested number of videos', async () => {
+      const videos = await fetchVideoMetrics(tenantId, 5);
       expect(videos).toHaveLength(5);
     });
 
-    it('should default to 10 videos', () => {
-      const videos = fetchVideoMetrics(tenantId);
+    it('should default to 10 videos', async () => {
+      const videos = await fetchVideoMetrics(tenantId);
       expect(videos).toHaveLength(10);
     });
 
-    it('should return videos with all required fields', () => {
-      const videos = fetchVideoMetrics(tenantId, 1);
+    it('should return videos with all required fields', async () => {
+      const videos = await fetchVideoMetrics(tenantId, 1);
       const video = videos[0];
 
       expect(video).toHaveProperty('videoId');
@@ -74,8 +74,8 @@ describe('YouTube Mock Integration', () => {
       expect(video).toHaveProperty('engagementRate');
     });
 
-    it('should return videos with valid stats', () => {
-      const videos = fetchVideoMetrics(tenantId, 3);
+    it('should return videos with valid stats', async () => {
+      const videos = await fetchVideoMetrics(tenantId, 3);
 
       videos.forEach(video => {
         expect(video.stats.viewCount).toBeGreaterThan(0);
@@ -87,8 +87,8 @@ describe('YouTube Mock Integration', () => {
       });
     });
 
-    it('should return videos with valid ISO dates', () => {
-      const videos = fetchVideoMetrics(tenantId, 3);
+    it('should return videos with valid ISO dates', async () => {
+      const videos = await fetchVideoMetrics(tenantId, 3);
 
       videos.forEach(video => {
         expect(() => new Date(video.publishedAt)).not.toThrow();
@@ -96,8 +96,8 @@ describe('YouTube Mock Integration', () => {
       });
     });
 
-    it('should return videos with tags array', () => {
-      const videos = fetchVideoMetrics(tenantId, 3);
+    it('should return videos with tags array', async () => {
+      const videos = await fetchVideoMetrics(tenantId, 3);
 
       videos.forEach(video => {
         expect(Array.isArray(video.tags)).toBe(true);
@@ -107,8 +107,8 @@ describe('YouTube Mock Integration', () => {
   });
 
   describe('fetchAggregatedStats', () => {
-    it('should return aggregated stats with all fields', () => {
-      const stats = fetchAggregatedStats(tenantId);
+    it('should return aggregated stats with all fields', async () => {
+      const stats = await fetchAggregatedStats(tenantId);
 
       expect(stats).toHaveProperty('totalViews');
       expect(stats).toHaveProperty('totalLikes');
@@ -118,8 +118,8 @@ describe('YouTube Mock Integration', () => {
       expect(stats).toHaveProperty('videoCount');
     });
 
-    it('should return positive totals', () => {
-      const stats = fetchAggregatedStats(tenantId);
+    it('should return positive totals', async () => {
+      const stats = await fetchAggregatedStats(tenantId);
 
       expect(stats.totalViews).toBeGreaterThan(0);
       expect(stats.totalLikes).toBeGreaterThan(0);
@@ -127,8 +127,8 @@ describe('YouTube Mock Integration', () => {
       expect(stats.videoCount).toBe(20);
     });
 
-    it('should have avgEngagementRate between 0 and 1', () => {
-      const stats = fetchAggregatedStats(tenantId);
+    it('should have avgEngagementRate between 0 and 1', async () => {
+      const stats = await fetchAggregatedStats(tenantId);
 
       expect(stats.avgEngagementRate).toBeGreaterThan(0);
       expect(stats.avgEngagementRate).toBeLessThan(1);

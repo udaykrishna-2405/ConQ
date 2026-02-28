@@ -28,6 +28,8 @@ const getProfile = async (
     role: user.role,
     tier: user.tier,
     platforms: user.platforms,
+    onboarding: user.onboarding || null,
+    onboardingCompleted: user.onboarding_completed || false,
     createdAt: user.created_at,
     updatedAt: user.updated_at,
   });
@@ -57,6 +59,8 @@ const updateProfile = async (
     role: user.role,
     tier: user.tier,
     platforms: user.platforms,
+    onboarding: user.onboarding || null,
+    onboardingCompleted: user.onboarding_completed || false,
     updatedAt: user.updated_at,
   });
 };

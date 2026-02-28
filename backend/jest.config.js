@@ -10,6 +10,14 @@ module.exports = {
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'clover'],
+  coverageThreshold: {
+    global: {
+      statements: 75,
+      branches: 55,
+      functions: 65,
+      lines: 75,
+    },
+  },
   moduleNameMapper: {
     '^@handlers/(.*)$': '<rootDir>/src/handlers/$1',
     '^@services/(.*)$': '<rootDir>/src/services/$1',

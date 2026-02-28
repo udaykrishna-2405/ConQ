@@ -1,12 +1,20 @@
-// Instagram Mock Integration
-// Simulates Instagram Graph API responses for post metadata and insights.
+// Instagram Platform Integration
+// Uses Instagram Graph API when INSTAGRAM_ACCESS_TOKEN is configured.
+// Falls back to deterministic mock data when access token is absent.
 //
-// In production, replace with actual Instagram Graph API calls:
-//   - /me (profile info)
-//   - /me/media (recent posts)
-//   - /{media-id}/insights (engagement metrics)
+// Required env vars for real mode:
+//   INSTAGRAM_ACCESS_TOKEN – Instagram Graph API long-lived access token
 //
-// Access token stored in Secrets Manager, not in code.
+// Instagram Graph API endpoints used:
+//   - GET /me                 (profile info)
+//   - GET /me/media           (recent posts)
+//   - GET /{media-id}/insights (engagement metrics)
+//
+// Access token stored in Secrets Manager in production.
+
+import https from 'https';
+
+// ─── Interfaces ──────────────────────────────────────────────────────────────
 
 export interface InstagramProfile {
   profileId: string;
@@ -36,7 +44,149 @@ export interface InstagramPost {
   engagementRate: number;
 }
 
-// Mock profile data pool
+// ─── Real Instagram Graph API Client ─────────────────────────────────────────
+
+const INSTAGRAM_ACCESS_TOKEN = process.env.INSTAGRAM_ACCESS_TOKEN;
+const IG_BASE = 'https://graph.instagram.com';
+
+/** Simple HTTPS GET that returns parsed JSON. */
+function igGet<T>(url: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    https.get(url, (res) => {
+      let data = '';
+      res.on('data', (chunk: string) => (data += chunk));
+      res.on('end', () => {
+        try {
+          resolve(JSON.parse(data) as T);
+        } catch (err) {
+          reject(new Error(`Instagram API JSON parse error: ${err}`));
+        }
+      });
+      res.on('error', reject);
+    }).on('error', reject);
+  });
+}
+
+interface IGProfileResponse {
+  id: string;
+  username: string;
+  followers_count: number;
+  follows_count: number;
+  media_count: number;
+  biography?: string;
+}
+
+interface IGMediaResponse {
+  data: Array<{
+    id: string;
+    caption?: string;
+    media_type: 'IMAGE' | 'VIDEO' | 'CAROUSEL_ALBUM';
+    media_url?: string;
+    permalink: string;
+    timestamp: string;
+    like_count?: number;
+    comments_count?: number;
+  }>;
+  paging?: { next?: string };
+}
+
+interface IGInsightsResponse {
+  data: Array<{
+    name: string;
+    values: Array<{ value: number }>;
+  }>;
+}
+
+/** Map Instagram media_type to our normalized type. */
+function normalizeMediaType(mt: string): 'image' | 'video' | 'carousel' {
+  switch (mt) {
+    case 'VIDEO': return 'video';
+    case 'CAROUSEL_ALBUM': return 'carousel';
+    default: return 'image';
+  }
+}
+
+/** Extract hashtags from a caption string. */
+function extractHashtags(caption: string): string[] {
+  const matches = caption.match(/#[\w\u0900-\u097F]+/g); // supports Hindi chars
+  return matches || [];
+}
+
+/** Fetch profile from Instagram Graph API. */
+async function realFetchProfile(accessToken: string): Promise<InstagramProfile> {
+  const fields = 'id,username,followers_count,follows_count,media_count,biography';
+  const url = `${IG_BASE}/me?fields=${fields}&access_token=${accessToken}`;
+  const resp = await igGet<IGProfileResponse>(url);
+
+  return {
+    profileId: resp.id,
+    username: resp.username,
+    followersCount: resp.followers_count || 0,
+    followingCount: resp.follows_count || 0,
+    mediaCount: resp.media_count || 0,
+    biography: resp.biography || '',
+  };
+}
+
+/** Fetch recent posts + insights from Instagram Graph API. */
+async function realFetchPosts(accessToken: string, count: number): Promise<InstagramPost[]> {
+  const mediaFields = 'id,caption,media_type,media_url,permalink,timestamp,like_count,comments_count';
+  const url = `${IG_BASE}/me/media?fields=${mediaFields}&limit=${count}&access_token=${accessToken}`;
+  const resp = await igGet<IGMediaResponse>(url);
+
+  if (!resp.data || resp.data.length === 0) return [];
+
+  // Fetch insights for each media item (reach, impressions, saved, shares)
+  const posts: InstagramPost[] = await Promise.all(
+    resp.data.map(async (item) => {
+      let reachCount = 0;
+      let impressionCount = 0;
+      let saveCount = 0;
+      let shareCount = 0;
+
+      try {
+        const insightsUrl = `${IG_BASE}/${item.id}/insights?metric=reach,impressions,saved,shares&access_token=${accessToken}`;
+        const insights = await igGet<IGInsightsResponse>(insightsUrl);
+        for (const metric of insights.data) {
+          const val = metric.values?.[0]?.value ?? 0;
+          switch (metric.name) {
+            case 'reach': reachCount = val; break;
+            case 'impressions': impressionCount = val; break;
+            case 'saved': saveCount = val; break;
+            case 'shares': shareCount = val; break;
+          }
+        }
+      } catch {
+        // Insights may fail for some media types; continue without them
+      }
+
+      const likeCount = item.like_count || 0;
+      const commentCount = item.comments_count || 0;
+      const caption = item.caption || '';
+      const totalEngagement = likeCount + commentCount + shareCount + saveCount;
+      const engagementRate = reachCount > 0
+        ? Math.round((totalEngagement / reachCount) * 10000) / 10000
+        : 0;
+
+      return {
+        postId: item.id,
+        caption,
+        mediaType: normalizeMediaType(item.media_type),
+        mediaUrl: item.media_url || '',
+        permalink: item.permalink,
+        publishedAt: item.timestamp,
+        hashtags: extractHashtags(caption),
+        stats: { likeCount, commentCount, shareCount, saveCount, reachCount, impressionCount },
+        engagementRate,
+      };
+    }),
+  );
+
+  return posts;
+}
+
+// ─── Mock Data (used when INSTAGRAM_ACCESS_TOKEN is not set) ─────────────────
+
 const MOCK_PROFILES: InstagramProfile[] = [
   {
     profileId: 'ig_mock_lifestyle_01',
@@ -133,28 +283,66 @@ const generateMockPost = (profileId: string, index: number): InstagramPost => {
   };
 };
 
-/**
- * Fetches Instagram profile info for a given tenant.
- * In production: Instagram Graph API /me
- */
-export const fetchProfileMetrics = (tenantId: string): InstagramProfile => {
+function mockFetchProfile(tenantId: string): InstagramProfile {
   const index = tenantId.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % MOCK_PROFILES.length;
   return { ...MOCK_PROFILES[index] };
+}
+
+function mockFetchPosts(tenantId: string, count: number): InstagramPost[] {
+  const profileId = mockFetchProfile(tenantId).profileId;
+  return Array.from({ length: count }, (_, i) => generateMockPost(profileId, i));
+}
+
+// ─── Public API (auto-selects real vs mock) ──────────────────────────────────
+
+/**
+ * Fetches Instagram profile info for a given tenant.
+ * Uses Instagram Graph API when INSTAGRAM_ACCESS_TOKEN is set; mock data otherwise.
+ * @param tenantId     Tenant identifier
+ * @param accessToken  Optional per-tenant access token (overrides env var)
+ */
+export const fetchProfileMetrics = async (
+  tenantId: string,
+  accessToken?: string,
+): Promise<InstagramProfile> => {
+  const token = accessToken || INSTAGRAM_ACCESS_TOKEN;
+  if (token) {
+    try {
+      return await realFetchProfile(token);
+    } catch (err) {
+      console.warn('Instagram API failed, falling back to mock:', err);
+    }
+  }
+  return mockFetchProfile(tenantId);
 };
 
 /**
  * Fetches recent post metadata.
- * In production: Instagram Graph API /me/media
+ * Uses Instagram Graph API when INSTAGRAM_ACCESS_TOKEN is set; mock data otherwise.
  */
-export const fetchPostMetrics = (tenantId: string, count = 10): InstagramPost[] => {
-  const profileId = fetchProfileMetrics(tenantId).profileId;
-  return Array.from({ length: count }, (_, i) => generateMockPost(profileId, i));
+export const fetchPostMetrics = async (
+  tenantId: string,
+  count = 10,
+  accessToken?: string,
+): Promise<InstagramPost[]> => {
+  const token = accessToken || INSTAGRAM_ACCESS_TOKEN;
+  if (token) {
+    try {
+      return await realFetchPosts(token, count);
+    } catch (err) {
+      console.warn('Instagram API failed, falling back to mock:', err);
+    }
+  }
+  return mockFetchPosts(tenantId, count);
 };
 
 /**
  * Fetches aggregated stats across all recent posts.
  */
-export const fetchAggregatedPostStats = (tenantId: string): {
+export const fetchAggregatedPostStats = async (
+  tenantId: string,
+  accessToken?: string,
+): Promise<{
   totalLikes: number;
   totalComments: number;
   totalShares: number;
@@ -163,8 +351,8 @@ export const fetchAggregatedPostStats = (tenantId: string): {
   totalImpressions: number;
   avgEngagementRate: number;
   postCount: number;
-} => {
-  const posts = fetchPostMetrics(tenantId, 20);
+}> => {
+  const posts = await fetchPostMetrics(tenantId, 20, accessToken);
 
   const totals = posts.reduce(
     (acc, p) => ({
@@ -186,7 +374,12 @@ export const fetchAggregatedPostStats = (tenantId: string): {
     totalSaves: totals.saves,
     totalReach: totals.reach,
     totalImpressions: totals.impressions,
-    avgEngagementRate: Math.round((totals.engagementSum / posts.length) * 10000) / 10000,
+    avgEngagementRate: posts.length > 0
+      ? Math.round((totals.engagementSum / posts.length) * 10000) / 10000
+      : 0,
     postCount: posts.length,
   };
 };
+
+/** Returns true if a real Instagram access token is configured. */
+export const isRealApiConfigured = (): boolean => !!INSTAGRAM_ACCESS_TOKEN;

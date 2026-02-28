@@ -1,4 +1,4 @@
-// Instagram Mock Integration Tests
+// Instagram Platform Integration Tests
 
 import {
   fetchProfileMetrics,
@@ -6,12 +6,12 @@ import {
   fetchAggregatedPostStats,
 } from '../../../src/services/platforms/instagram';
 
-describe('Instagram Mock Integration', () => {
+describe('Instagram Platform Integration', () => {
   const tenantId = 'tenant_test_ig_001';
 
   describe('fetchProfileMetrics', () => {
-    it('should return a profile with all required fields', () => {
-      const profile = fetchProfileMetrics(tenantId);
+    it('should return a profile with all required fields', async () => {
+      const profile = await fetchProfileMetrics(tenantId);
 
       expect(profile).toHaveProperty('profileId');
       expect(profile).toHaveProperty('username');
@@ -21,25 +21,25 @@ describe('Instagram Mock Integration', () => {
       expect(profile).toHaveProperty('biography');
     });
 
-    it('should return positive metrics', () => {
-      const profile = fetchProfileMetrics(tenantId);
+    it('should return positive metrics', async () => {
+      const profile = await fetchProfileMetrics(tenantId);
 
       expect(profile.followersCount).toBeGreaterThan(0);
       expect(profile.followingCount).toBeGreaterThan(0);
       expect(profile.mediaCount).toBeGreaterThan(0);
     });
 
-    it('should return consistent results for the same tenant', () => {
-      const p1 = fetchProfileMetrics(tenantId);
-      const p2 = fetchProfileMetrics(tenantId);
+    it('should return consistent results for the same tenant', async () => {
+      const p1 = await fetchProfileMetrics(tenantId);
+      const p2 = await fetchProfileMetrics(tenantId);
 
       expect(p1.profileId).toBe(p2.profileId);
       expect(p1.username).toBe(p2.username);
     });
 
-    it('should return a copy, not a reference', () => {
-      const p1 = fetchProfileMetrics(tenantId);
-      const p2 = fetchProfileMetrics(tenantId);
+    it('should return a copy, not a reference', async () => {
+      const p1 = await fetchProfileMetrics(tenantId);
+      const p2 = await fetchProfileMetrics(tenantId);
 
       p1.followersCount = 0;
       expect(p2.followersCount).toBeGreaterThan(0);
@@ -47,18 +47,18 @@ describe('Instagram Mock Integration', () => {
   });
 
   describe('fetchPostMetrics', () => {
-    it('should return the requested number of posts', () => {
-      const posts = fetchPostMetrics(tenantId, 5);
+    it('should return the requested number of posts', async () => {
+      const posts = await fetchPostMetrics(tenantId, 5);
       expect(posts).toHaveLength(5);
     });
 
-    it('should default to 10 posts', () => {
-      const posts = fetchPostMetrics(tenantId);
+    it('should default to 10 posts', async () => {
+      const posts = await fetchPostMetrics(tenantId);
       expect(posts).toHaveLength(10);
     });
 
-    it('should return posts with all required fields', () => {
-      const posts = fetchPostMetrics(tenantId, 1);
+    it('should return posts with all required fields', async () => {
+      const posts = await fetchPostMetrics(tenantId, 1);
       const post = posts[0];
 
       expect(post).toHaveProperty('postId');
@@ -72,16 +72,16 @@ describe('Instagram Mock Integration', () => {
       expect(post).toHaveProperty('engagementRate');
     });
 
-    it('should return valid media types', () => {
-      const posts = fetchPostMetrics(tenantId, 6);
+    it('should return valid media types', async () => {
+      const posts = await fetchPostMetrics(tenantId, 6);
 
       posts.forEach(post => {
         expect(['image', 'video', 'carousel']).toContain(post.mediaType);
       });
     });
 
-    it('should return posts with valid stats', () => {
-      const posts = fetchPostMetrics(tenantId, 3);
+    it('should return posts with valid stats', async () => {
+      const posts = await fetchPostMetrics(tenantId, 3);
 
       posts.forEach(post => {
         expect(post.stats.likeCount).toBeGreaterThanOrEqual(0);
@@ -95,8 +95,8 @@ describe('Instagram Mock Integration', () => {
       });
     });
 
-    it('should return posts with hashtags', () => {
-      const posts = fetchPostMetrics(tenantId, 3);
+    it('should return posts with hashtags', async () => {
+      const posts = await fetchPostMetrics(tenantId, 3);
 
       posts.forEach(post => {
         expect(Array.isArray(post.hashtags)).toBe(true);
@@ -105,8 +105,8 @@ describe('Instagram Mock Integration', () => {
       });
     });
 
-    it('should return impressions >= reach', () => {
-      const posts = fetchPostMetrics(tenantId, 5);
+    it('should return impressions >= reach', async () => {
+      const posts = await fetchPostMetrics(tenantId, 5);
 
       posts.forEach(post => {
         expect(post.stats.impressionCount).toBeGreaterThanOrEqual(post.stats.reachCount);
@@ -115,8 +115,8 @@ describe('Instagram Mock Integration', () => {
   });
 
   describe('fetchAggregatedPostStats', () => {
-    it('should return aggregated stats with all fields', () => {
-      const stats = fetchAggregatedPostStats(tenantId);
+    it('should return aggregated stats with all fields', async () => {
+      const stats = await fetchAggregatedPostStats(tenantId);
 
       expect(stats).toHaveProperty('totalLikes');
       expect(stats).toHaveProperty('totalComments');
@@ -128,8 +128,8 @@ describe('Instagram Mock Integration', () => {
       expect(stats).toHaveProperty('postCount');
     });
 
-    it('should return positive totals', () => {
-      const stats = fetchAggregatedPostStats(tenantId);
+    it('should return positive totals', async () => {
+      const stats = await fetchAggregatedPostStats(tenantId);
 
       expect(stats.totalLikes).toBeGreaterThan(0);
       expect(stats.totalReach).toBeGreaterThan(0);
@@ -137,15 +137,15 @@ describe('Instagram Mock Integration', () => {
       expect(stats.postCount).toBe(20);
     });
 
-    it('should have avgEngagementRate between 0 and 1', () => {
-      const stats = fetchAggregatedPostStats(tenantId);
+    it('should have avgEngagementRate between 0 and 1', async () => {
+      const stats = await fetchAggregatedPostStats(tenantId);
 
       expect(stats.avgEngagementRate).toBeGreaterThan(0);
       expect(stats.avgEngagementRate).toBeLessThan(1);
     });
 
-    it('should have totalImpressions >= totalReach', () => {
-      const stats = fetchAggregatedPostStats(tenantId);
+    it('should have totalImpressions >= totalReach', async () => {
+      const stats = await fetchAggregatedPostStats(tenantId);
       expect(stats.totalImpressions).toBeGreaterThanOrEqual(stats.totalReach);
     });
   });

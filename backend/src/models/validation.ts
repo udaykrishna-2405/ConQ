@@ -28,6 +28,13 @@ export const registerSchema = z.object({
 export const updateProfileSchema = z.object({
   name: z.string().min(1).max(100).trim().optional(),
   platforms: z.array(z.enum(['youtube', 'instagram'])).max(10).optional(),
+  onboarding: z.object({
+    youtubeChannelId: z.string().max(100).trim().optional(),
+    instagramHandle: z.string().max(100).trim().optional(),
+    contentNiche: z.array(z.string().max(50).trim()).max(5).optional(),
+    goals: z.array(z.string().max(50).trim()).max(5).optional(),
+  }).optional(),
+  onboardingCompleted: z.boolean().optional(),
 });
 
 // ── NLP Schemas (Phase 2) ──
@@ -57,6 +64,10 @@ export const trendQuerySchema = z.object({
   category: z.enum(['emerging', 'trending', 'viral', 'declining']).optional(),
   limit: z.string().regex(/^\d+$/).optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+});
+
+export const refreshTokenSchema = z.object({
+  refreshToken: z.string().min(1, 'Refresh token is required').max(200),
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { User, LoginRequest, RegisterRequest, AuthResponse } from '../../types';
+import { User, LoginRequest, RegisterRequest, AuthResponse, UpdateProfileRequest } from '../../types';
 import { authApi } from '../../services/api';
 
 interface AuthState {
@@ -53,6 +53,17 @@ export const fetchProfile = createAsyncThunk<User>(
   }
 );
 
+export const completeOnboarding = createAsyncThunk<User, UpdateProfileRequest>(
+  'auth/completeOnboarding',
+  async (data, { rejectWithValue }) => {
+    try {
+      return await authApi.updateProfile(data);
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.error || 'Failed to save onboarding');
+    }
+  }
+);
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -101,6 +112,20 @@ const authSlice = createSlice({
     // Fetch Profile
     builder.addCase(fetchProfile.fulfilled, (state, action: PayloadAction<User>) => {
       state.user = action.payload;
+    });
+
+    // Complete Onboarding
+    builder.addCase(completeOnboarding.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(completeOnboarding.fulfilled, (state, action: PayloadAction<User>) => {
+      state.loading = false;
+      state.user = action.payload;
+    });
+    builder.addCase(completeOnboarding.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
     });
   },
 });

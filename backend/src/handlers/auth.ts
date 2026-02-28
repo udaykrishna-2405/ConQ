@@ -1,21 +1,21 @@
-// Auth Handler – POST /auth/login, POST /auth/register
-// Unauthenticated endpoints for user registration and login.
-// Includes rate limiting to prevent brute force attacks.
+// Auth Handler – POST /auth/login, POST /auth/register, POST /auth/refresh, POST /auth/logout
+// Unauthenticated endpoints for user authentication.
+// Includes rate limiting and refresh token rotation.
 
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { AuthService } from '../services/authService';
 import { validateBody } from '../middleware/validation';
-import { loginSchema, registerSchema } from '../models/validation';
-import { success, created } from '../utils/response';
+import { loginSchema, registerSchema, refreshTokenSchema } from '../models/validation';
+import { success, created, getResponseHeaders } from '../utils/response';
 import { withErrorHandling } from '../middleware/errorHandler';
 import { checkRateLimit, getRateLimitKey, RATE_LIMITS } from '../middleware/rateLimit';
-import { getResponseHeaders } from '../utils/response';
+import { withAuth, AuthContext } from '../middleware/auth';
 
 const authService = new AuthService();
 
 /**
  * POST /auth/register
- * Creates a new user account and returns a JWT token.
+ * Creates a new user account and returns access + refresh token pair.
  */
 export const registerHandler = withErrorHandling(
   async (event: unknown): Promise<APIGatewayProxyResult> => {
@@ -42,14 +42,15 @@ export const registerHandler = withErrorHandling(
         role: result.user.role,
         tier: result.user.tier,
       },
-      token: result.token,
+      token: result.tokens.accessToken,
+      refreshToken: result.tokens.refreshToken,
     });
   }
 );
 
 /**
  * POST /auth/login
- * Authenticates a user and returns a JWT token.
+ * Authenticates a user and returns access + refresh token pair.
  */
 export const loginHandler = withErrorHandling(
   async (event: unknown): Promise<APIGatewayProxyResult> => {
@@ -73,13 +74,47 @@ export const loginHandler = withErrorHandling(
         role: result.user.role,
         tier: result.user.tier,
       },
-      token: result.token,
+      token: result.tokens.accessToken,
+      refreshToken: result.tokens.refreshToken,
     });
   }
 );
 
 /**
- * Auth router – dispatches to register or login based on path.
+ * POST /auth/refresh
+ * Rotates refresh token and returns new access + refresh token pair.
+ */
+export const refreshHandler = withErrorHandling(
+  async (event: unknown): Promise<APIGatewayProxyResult> => {
+    const apiEvent = event as APIGatewayProxyEvent;
+    checkRateLimit(`refresh:${getRateLimitKey(apiEvent)}`, RATE_LIMITS.auth);
+
+    const body = validateBody(apiEvent, refreshTokenSchema);
+    const tokens = await authService.refreshToken(body.refreshToken);
+
+    return success({
+      token: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    });
+  }
+);
+
+/**
+ * POST /auth/logout
+ * Revokes all refresh tokens for the authenticated user.
+ */
+export const logoutHandler = withAuth(
+  async (
+    _event: APIGatewayProxyEvent,
+    context: AuthContext
+  ): Promise<APIGatewayProxyResult> => {
+    await authService.logout(context.userId);
+    return success({ message: 'Logged out successfully' });
+  }
+);
+
+/**
+ * Auth router – dispatches to register, login, refresh, or logout based on path.
  * API Gateway maps: POST /auth/{action}
  */
 export const authHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
@@ -90,6 +125,10 @@ export const authHandler = async (event: APIGatewayProxyEvent): Promise<APIGatew
       return registerHandler(event);
     case 'login':
       return loginHandler(event);
+    case 'refresh':
+      return refreshHandler(event);
+    case 'logout':
+      return logoutHandler(event);
     default:
       return {
         statusCode: 404,

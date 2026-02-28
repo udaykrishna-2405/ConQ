@@ -1,0 +1,72 @@
+const hi = {
+  // Nav
+  'nav.brand': 'ConQ',
+  'nav.subtitle': 'AI ग्रोथ OS',
+  'nav.dashboard': 'डैशबोर्ड',
+  'nav.nlp': 'NLP विश्लेषक',
+  'nav.predict': 'वायरलिटी प्रेडिक्टर',
+  'nav.trends': 'ट्रेंड्स',
+  'nav.logout': 'लॉगआउट',
+
+  // Login
+  'login.title': 'ConQ',
+  'login.tagline': 'AI-संचालित ग्रोथ ऑपरेटिंग सिस्टम',
+  'login.signIn': 'साइन इन',
+  'login.createAccount': 'खाता बनाएं',
+  'login.email': 'ईमेल',
+  'login.password': 'पासवर्ड',
+  'login.name': 'पूरा नाम',
+  'login.tenantId': 'संगठन ID',
+  'login.pleaseWait': 'कृपया प्रतीक्षा करें...',
+  'login.noAccount': 'खाता नहीं है?',
+  'login.hasAccount': 'पहले से खाता है?',
+  'login.emailPlaceholder': 'you@example.com',
+  'login.passwordPlaceholder': 'न्यूनतम 8 अक्षर',
+  'login.namePlaceholder': 'आपका पूरा नाम',
+  'login.tenantPlaceholder': 'आपकी संगठन ID',
+
+  // Dashboard
+  'dashboard.title': 'एनालिटिक्स डैशबोर्ड',
+  'dashboard.subtitle': 'क्रॉस-प्लेटफॉर्म प्रदर्शन अवलोकन',
+  'dashboard.generated': 'जनरेट किया गया',
+  'dashboard.exportCsv': 'CSV निर्यात',
+  'dashboard.totalReach': 'कुल पहुंच',
+  'dashboard.totalEngagements': 'कुल एंगेजमेंट',
+  'dashboard.engagementRate': 'एंगेजमेंट दर',
+  'dashboard.contentPublished': 'प्रकाशित सामग्री',
+  'dashboard.reachSubtitle': 'YouTube व्यूज + Instagram पहुंच',
+  'dashboard.engagementSubtitle': 'लाइक, कमेंट, शेयर, सेव',
+  'dashboard.rateSubtitle': 'क्रॉस-प्लेटफॉर्म भारित औसत',
+  'dashboard.loading': 'डैशबोर्ड लोड हो रहा है...',
+
+  // Onboarding
+  'onboarding.welcome': 'ConQ में आपका स्वागत है',
+  'onboarding.subtitle': '3 आसान चरणों में अपनी क्रिएटर प्रोफाइल सेट करें',
+  'onboarding.platforms': 'प्लेटफॉर्म',
+  'onboarding.niche': 'विषय',
+  'onboarding.goals': 'लक्ष्य',
+  'onboarding.connectPlatforms': 'अपने प्लेटफॉर्म कनेक्ट करें',
+  'onboarding.connectDesc': 'प्रदर्शन ट्रैकिंग शुरू करने के लिए अपना YouTube चैनल और/या Instagram अकाउंट लिंक करें।',
+  'onboarding.youtubeLabel': 'YouTube चैनल ID',
+  'onboarding.instagramLabel': 'Instagram यूज़रनेम',
+  'onboarding.selectNiche': 'अपना कंटेंट विषय चुनें',
+  'onboarding.nicheDesc': 'अपनी सामग्री का वर्णन करने वाली 3 श्रेणियां चुनें।',
+  'onboarding.selectGoals': 'आपके लक्ष्य क्या हैं?',
+  'onboarding.goalsDesc': 'ConQ आपके अनुभव को व्यक्तिगत बना सके, 3 लक्ष्य चुनें।',
+  'onboarding.next': 'अगला',
+  'onboarding.back': 'पीछे',
+  'onboarding.getStarted': 'शुरू करें',
+  'onboarding.saving': 'सहेज रहे हैं...',
+  'onboarding.selected': 'चयनित',
+
+  // Common
+  'common.videos': 'वीडियो',
+  'common.posts': 'पोस्ट',
+  'common.subscribers': 'सब्सक्राइबर्स',
+  'common.followers': 'फॉलोअर्स',
+  'common.totalViews': 'कुल व्यूज',
+  'common.totalReach': 'कुल पहुंच',
+  'common.avgEngagement': 'औसत एंगेजमेंट',
+};
+
+export default hi;

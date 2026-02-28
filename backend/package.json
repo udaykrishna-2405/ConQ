@@ -9,13 +9,15 @@
     "test:unit": "jest --testPathPattern=tests/unit",
     "test:integration": "jest --testPathPattern=tests/integration",
     "lint": "eslint src/ --ext .ts",
+    "test:load": "artillery run tests/load/loadtest.yml",
     "deploy": "cdk deploy --app ../infrastructure"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.450.0",
-    "@aws-sdk/lib-dynamodb": "^3.450.0",
     "@aws-sdk/client-s3": "^3.450.0",
     "@aws-sdk/client-sagemaker-runtime": "^3.450.0",
+    "@aws-sdk/client-ses": "^3.1000.0",
+    "@aws-sdk/lib-dynamodb": "^3.450.0",
     "aws-lambda": "^1.0.7",
     "jsonwebtoken": "^9.0.2",
     "uuid": "^9.0.0",
