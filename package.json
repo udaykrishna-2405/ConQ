@@ -1,0 +1,19 @@
+{
+  "name": "conq-hackathon",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ConQ – AI Growth Operating System (Monorepo)",
+  "workspaces": [
+    "backend",
+    "frontend",
+    "infrastructure"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces --if-present",
+    "start:frontend": "npm run start --workspace=frontend",
+    "build:backend": "npm run build --workspace=backend",
+    "build:frontend": "npm run build --workspace=frontend",
+    "build:infra": "npm run build --workspace=infrastructure"
+  }
+}
