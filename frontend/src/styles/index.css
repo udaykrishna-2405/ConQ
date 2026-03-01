@@ -1038,3 +1038,461 @@ body {
     gap: 16px;
   }
 }
+
+/* ── Navbar Dropdown ── */
+
+.nav-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.nav-dropdown-toggle {
+  background: transparent;
+  border: none;
+  color: #c0c0d0;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.nav-dropdown-toggle:hover,
+.nav-dropdown-toggle.active {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.nav-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #1a1a2e;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  min-width: 200px;
+  padding: 8px 0;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 200;
+  animation: fadeIn 0.15s ease;
+}
+
+.nav-dropdown-menu a {
+  display: block;
+  color: #c0c0d0;
+  text-decoration: none;
+  padding: 10px 16px;
+  font-size: 14px;
+  transition: all 0.15s;
+}
+
+.nav-dropdown-menu a:hover,
+.nav-dropdown-menu a.active {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* ── Module Tab Selector ── */
+
+.tab-selector {
+  display: flex;
+  gap: 0;
+  margin-bottom: 24px;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 14px 20px;
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: #636e72;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom: 3px solid transparent;
+  font-family: inherit;
+}
+
+.tab-btn:hover {
+  background: #f8f9fa;
+  color: #2d3436;
+}
+
+.tab-btn.active {
+  color: #3498db;
+  border-bottom-color: #3498db;
+  background: #f0f8ff;
+}
+
+/* ── Module Section ── */
+
+.module-section {
+  background: #fff;
+  border-radius: 10px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  margin-bottom: 24px;
+}
+
+.module-section h3 {
+  font-size: 16px;
+  color: #1a1a2e;
+  margin-bottom: 16px;
+}
+
+/* ── Output Cards ── */
+
+.output-card {
+  background: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.output-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.output-variant {
+  font-weight: 600;
+  color: #1a1a2e;
+  font-size: 14px;
+}
+
+.output-meta {
+  font-size: 12px;
+  color: #95a5a6;
+}
+
+.output-text {
+  font-size: 14px;
+  color: #2d3436;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── Suggestion Cards ── */
+
+.suggestion-card {
+  background: #f8f9fa;
+  border-left: 4px solid #3498db;
+  border-radius: 0 8px 8px 0;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.suggestion-card.priority-high { border-left-color: #e74c3c; }
+.suggestion-card.priority-medium { border-left-color: #f39c12; }
+.suggestion-card.priority-low { border-left-color: #2ecc71; }
+
+.suggestion-category {
+  font-weight: 600;
+  color: #1a1a2e;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.suggestion-text {
+  font-size: 14px;
+  color: #2d3436;
+  margin-bottom: 6px;
+}
+
+.suggestion-rationale {
+  font-size: 12px;
+  color: #95a5a6;
+  font-style: italic;
+}
+
+/* ── Risk Badges ── */
+
+.risk-badge {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.risk-low { background: #eafaf1; color: #27ae60; }
+.risk-medium { background: #fef9e7; color: #f39c12; }
+.risk-high { background: #fdedec; color: #e74c3c; }
+.risk-critical { background: #e74c3c; color: #fff; }
+
+/* ── Score Display (Scorecard) ── */
+
+.score-circle-large {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  border: 8px solid;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+
+.score-circle-large .score-number {
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.score-circle-large .score-label {
+  font-size: 16px;
+  color: #95a5a6;
+}
+
+.grade-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 800;
+  margin: 0 8px;
+}
+
+.tier-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: #3498db;
+  color: #fff;
+}
+
+/* ── Progress Bar ── */
+
+.progress-bar-container {
+  height: 8px;
+  background: #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+  background: linear-gradient(90deg, #3498db, #2ecc71);
+}
+
+/* ── Badge Grid ── */
+
+.badge-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.badge-card {
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.badge-card.earned {
+  border-color: #2ecc71;
+  background: #fafff9;
+}
+
+.badge-card.unearned {
+  border-style: dashed;
+  opacity: 0.6;
+}
+
+.badge-icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.badge-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: #1a1a2e;
+  margin-bottom: 4px;
+}
+
+.badge-desc {
+  font-size: 12px;
+  color: #636e72;
+}
+
+/* ── Hashtag Tags ── */
+
+.hashtag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.hashtag-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  background: #f0f0f0;
+  color: #2d3436;
+  border: 1px solid #e0e0e0;
+}
+
+.hashtag-tag.recommended {
+  background: #e8f4fd;
+  border-color: #3498db;
+  color: #2980b9;
+}
+
+.hashtag-popularity {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.06);
+  text-transform: uppercase;
+}
+
+/* ── A/B Test Comparison ── */
+
+.ab-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.ab-variant {
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 20px;
+  border-top: 4px solid #95a5a6;
+}
+
+.ab-variant.winner {
+  border-top-color: #2ecc71;
+  background: #fafff9;
+}
+
+.ab-variant h4 {
+  font-size: 16px;
+  margin-bottom: 12px;
+  color: #1a1a2e;
+}
+
+.ab-score {
+  font-size: 36px;
+  font-weight: 800;
+  color: #1a1a2e;
+  margin-bottom: 8px;
+}
+
+.ab-metric {
+  font-size: 13px;
+  color: #636e72;
+  margin-bottom: 4px;
+}
+
+.ab-list {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0;
+}
+
+.ab-list li {
+  font-size: 13px;
+  padding: 4px 0;
+  color: #2d3436;
+}
+
+.ab-list li::before {
+  margin-right: 6px;
+}
+
+/* ── Winner Card ── */
+
+.winner-card {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  color: #fff;
+  border-radius: 10px;
+  padding: 24px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.winner-card h3 {
+  color: #fff;
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+
+.winner-confidence {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* ── Checkbox Group ── */
+
+.checkbox-group {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #2d3436;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #3498db;
+}
+
+/* ── Responsive for new modules ── */
+
+@media (max-width: 768px) {
+  .ab-comparison {
+    grid-template-columns: 1fr;
+  }
+
+  .badge-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .nav-dropdown-menu {
+    right: 0;
+    left: auto;
+  }
+
+  .tab-selector {
+    flex-wrap: wrap;
+  }
+}

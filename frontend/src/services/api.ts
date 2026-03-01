@@ -12,6 +12,26 @@ import {
   TrendQuery,
   TrendResponse,
   DashboardResponse,
+  AiStudioGenerateRequest,
+  AiStudioVideoAssistRequest,
+  GeneratedContent,
+  VideoAssistResult,
+  MonetizationRequest,
+  MonetizationReport,
+  ContentShieldRequest,
+  ContentShieldReport,
+  GrowthForecastRequest,
+  GrowthForecastReport,
+  CompetitorBenchmarkRequest,
+  CompetitorBenchmarkReport,
+  ScheduleRequest,
+  ScheduleResult,
+  HashtagRequest,
+  HashtagResult,
+  ABTestRequest,
+  ABTestResult,
+  CreatorScorecardRequest,
+  CreatorScorecard,
 } from '../types';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001';
@@ -107,6 +127,80 @@ export const trendsApi = {
 export const analyticsApi = {
   getDashboard: async (): Promise<DashboardResponse> => {
     const res = await apiClient.get('/analytics/dashboard');
+    return res.data;
+  },
+};
+
+// ── AI Studio API ──
+
+export const aiStudioApi = {
+  generate: async (data: AiStudioGenerateRequest): Promise<GeneratedContent> => {
+    const res = await apiClient.post('/ai-studio/generate', data);
+    return res.data;
+  },
+  videoAssist: async (data: AiStudioVideoAssistRequest): Promise<VideoAssistResult> => {
+    const res = await apiClient.post('/ai-studio/video-assist', data);
+    return res.data;
+  },
+  getHistory: async (): Promise<{ history: unknown[] }> => {
+    const res = await apiClient.get('/ai-studio/history');
+    return res.data;
+  },
+};
+
+// ── Monetization API ──
+
+export const monetizationApi = {
+  generateReport: async (data: MonetizationRequest): Promise<MonetizationReport> => {
+    const res = await apiClient.post('/monetization/report', data);
+    return res.data;
+  },
+};
+
+// ── Content Shield API ──
+
+export const contentShieldApi = {
+  analyze: async (data: ContentShieldRequest): Promise<ContentShieldReport> => {
+    const res = await apiClient.post('/content-shield/analyze', data);
+    return res.data;
+  },
+};
+
+// ── Growth Intelligence API ──
+
+export const growthIntelligenceApi = {
+  forecast: async (data: GrowthForecastRequest): Promise<GrowthForecastReport> => {
+    const res = await apiClient.post('/growth-intelligence/forecast', data);
+    return res.data;
+  },
+  benchmark: async (data: CompetitorBenchmarkRequest): Promise<CompetitorBenchmarkReport> => {
+    const res = await apiClient.post('/growth-intelligence/benchmark', data);
+    return res.data;
+  },
+};
+
+// ── Automation API ──
+
+export const automationApi = {
+  schedule: async (data: ScheduleRequest): Promise<ScheduleResult> => {
+    const res = await apiClient.post('/automation/schedule', data);
+    return res.data;
+  },
+  hashtags: async (data: HashtagRequest): Promise<HashtagResult> => {
+    const res = await apiClient.post('/automation/hashtags', data);
+    return res.data;
+  },
+  abTest: async (data: ABTestRequest): Promise<ABTestResult> => {
+    const res = await apiClient.post('/automation/ab-test', data);
+    return res.data;
+  },
+};
+
+// ── Creator Scorecard API ──
+
+export const creatorScorecardApi = {
+  generate: async (data: CreatorScorecardRequest): Promise<CreatorScorecard> => {
+    const res = await apiClient.post('/creator-scorecard/generate', data);
     return res.data;
   },
 };

@@ -6,6 +6,12 @@ import Dashboard from './pages/Dashboard';
 import NlpAnalyzer from './pages/NlpAnalyzer';
 import ViralityPredictor from './pages/ViralityPredictor';
 import Trends from './pages/Trends';
+import AiStudio from './pages/AiStudio';
+import MonetizationHub from './pages/MonetizationHub';
+import ContentShield from './pages/ContentShield';
+import GrowthIntelligence from './pages/GrowthIntelligence';
+import AutomationCenter from './pages/AutomationCenter';
+import CreatorScorecard from './pages/CreatorScorecard';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/common/ProtectedRoute';
 
@@ -51,6 +57,54 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <Layout><Trends /></Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/ai-studio"
+          element={
+            <ProtectedRoute>
+              <Layout><AiStudio /></Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/monetization"
+          element={
+            <ProtectedRoute>
+              <Layout><MonetizationHub /></Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/content-shield"
+          element={
+            <ProtectedRoute>
+              <Layout><ContentShield /></Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/growth-intelligence"
+          element={
+            <ProtectedRoute>
+              <Layout><GrowthIntelligence /></Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/automation"
+          element={
+            <ProtectedRoute>
+              <Layout><AutomationCenter /></Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/creator-scorecard"
+          element={
+            <ProtectedRoute>
+              <Layout><CreatorScorecard /></Layout>
             </ProtectedRoute>
           }
         />

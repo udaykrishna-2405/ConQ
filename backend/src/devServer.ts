@@ -18,6 +18,12 @@ import { nlpHandler } from './handlers/nlp';
 import { predictionHandler } from './handlers/prediction';
 import { trendHandler } from './handlers/trend';
 import { analyticsHandler } from './handlers/analytics';
+import { aiStudioGenerateHandler, aiStudioVideoAssistHandler, aiStudioHistoryHandler } from './handlers/aiStudio';
+import { monetizationHandler } from './handlers/monetization';
+import { contentShieldHandler } from './handlers/contentShield';
+import { growthForecastHandler, competitorBenchmarkHandler } from './handlers/growthIntelligence';
+import { automationScheduleHandler, automationHashtagHandler, automationAbTestHandler } from './handlers/automation';
+import { creatorScorecardHandler } from './handlers/creatorScorecard';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -135,6 +141,29 @@ app.get('/trends', wrapHandler(trendHandler));
 // ── Analytics routes ──
 app.get('/analytics/dashboard', wrapHandler(analyticsHandler));
 
+// ── AI Studio routes ──
+app.post('/ai-studio/generate', wrapHandler(aiStudioGenerateHandler));
+app.post('/ai-studio/video-assist', wrapHandler(aiStudioVideoAssistHandler));
+app.get('/ai-studio/history', wrapHandler(aiStudioHistoryHandler));
+
+// ── Monetization routes ──
+app.post('/monetization/report', wrapHandler(monetizationHandler));
+
+// ── Content Shield routes ──
+app.post('/content-shield/analyze', wrapHandler(contentShieldHandler));
+
+// ── Growth Intelligence routes ──
+app.post('/growth-intelligence/forecast', wrapHandler(growthForecastHandler));
+app.post('/growth-intelligence/benchmark', wrapHandler(competitorBenchmarkHandler));
+
+// ── Automation routes ──
+app.post('/automation/schedule', wrapHandler(automationScheduleHandler));
+app.post('/automation/hashtags', wrapHandler(automationHashtagHandler));
+app.post('/automation/ab-test', wrapHandler(automationAbTestHandler));
+
+// ── Creator Scorecard routes ──
+app.post('/creator-scorecard/generate', wrapHandler(creatorScorecardHandler));
+
 // ── Health check ──
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -154,5 +183,16 @@ app.listen(PORT, () => {
   console.log(`  POST   /prediction/virality`);
   console.log(`  GET    /trends`);
   console.log(`  GET    /analytics/dashboard`);
+  console.log(`  POST   /ai-studio/generate`);
+  console.log(`  POST   /ai-studio/video-assist`);
+  console.log(`  GET    /ai-studio/history`);
+  console.log(`  POST   /monetization/report`);
+  console.log(`  POST   /content-shield/analyze`);
+  console.log(`  POST   /growth-intelligence/forecast`);
+  console.log(`  POST   /growth-intelligence/benchmark`);
+  console.log(`  POST   /automation/schedule`);
+  console.log(`  POST   /automation/hashtags`);
+  console.log(`  POST   /automation/ab-test`);
+  console.log(`  POST   /creator-scorecard/generate`);
   console.log(`  GET    /health\n`);
 });

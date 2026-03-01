@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useAppDispatch';
 import { logout } from '../../store/slices/authSlice';
@@ -10,6 +10,7 @@ const Navbar: React.FC = () => {
   const location = useLocation();
   const user = useAppSelector((state) => state.auth.user);
   const { language, setLanguage, t } = useI18n();
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -17,6 +18,9 @@ const Navbar: React.FC = () => {
   };
 
   if (location.pathname === '/login') return null;
+
+  const isActive = (path: string) => location.pathname === path ? 'active' : '';
+  const isMoreActive = ['/ai-studio', '/monetization', '/content-shield', '/growth-intelligence', '/automation', '/creator-scorecard'].includes(location.pathname);
 
   return (
     <nav className="navbar">
@@ -26,18 +30,37 @@ const Navbar: React.FC = () => {
       </div>
 
       <div className="navbar-links">
-        <Link to="/dashboard" className={location.pathname === '/dashboard' ? 'active' : ''}>
+        <Link to="/dashboard" className={isActive('/dashboard')}>
           {t('nav.dashboard')}
         </Link>
-        <Link to="/nlp" className={location.pathname === '/nlp' ? 'active' : ''}>
+        <Link to="/nlp" className={isActive('/nlp')}>
           {t('nav.nlp')}
         </Link>
-        <Link to="/predict" className={location.pathname === '/predict' ? 'active' : ''}>
+        <Link to="/predict" className={isActive('/predict')}>
           {t('nav.predict')}
         </Link>
-        <Link to="/trends" className={location.pathname === '/trends' ? 'active' : ''}>
+        <Link to="/trends" className={isActive('/trends')}>
           {t('nav.trends')}
         </Link>
+        <div className="nav-dropdown">
+          <button
+            className={`nav-dropdown-toggle ${isMoreActive ? 'active' : ''}`}
+            onClick={() => setMoreOpen(!moreOpen)}
+            onBlur={() => setTimeout(() => setMoreOpen(false), 200)}
+          >
+            More
+          </button>
+          {moreOpen && (
+            <div className="nav-dropdown-menu">
+              <Link to="/ai-studio" className={isActive('/ai-studio')} onClick={() => setMoreOpen(false)}>AI Studio</Link>
+              <Link to="/monetization" className={isActive('/monetization')} onClick={() => setMoreOpen(false)}>Monetization</Link>
+              <Link to="/content-shield" className={isActive('/content-shield')} onClick={() => setMoreOpen(false)}>Content Shield</Link>
+              <Link to="/growth-intelligence" className={isActive('/growth-intelligence')} onClick={() => setMoreOpen(false)}>Growth Intelligence</Link>
+              <Link to="/automation" className={isActive('/automation')} onClick={() => setMoreOpen(false)}>Automation</Link>
+              <Link to="/creator-scorecard" className={isActive('/creator-scorecard')} onClick={() => setMoreOpen(false)}>Creator Scorecard</Link>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="navbar-user">

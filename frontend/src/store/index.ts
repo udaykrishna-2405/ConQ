@@ -4,6 +4,12 @@ import dashboardReducer from './slices/dashboardSlice';
 import nlpReducer from './slices/nlpSlice';
 import predictionReducer from './slices/predictionSlice';
 import trendsReducer from './slices/trendsSlice';
+import aiStudioReducer from './slices/aiStudioSlice';
+import monetizationReducer from './slices/monetizationSlice';
+import contentShieldReducer from './slices/contentShieldSlice';
+import growthIntelligenceReducer from './slices/growthIntelligenceSlice';
+import automationReducer from './slices/automationSlice';
+import creatorScorecardReducer from './slices/creatorScorecardSlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +18,12 @@ export const store = configureStore({
     nlp: nlpReducer,
     prediction: predictionReducer,
     trends: trendsReducer,
+    aiStudio: aiStudioReducer,
+    monetization: monetizationReducer,
+    contentShield: contentShieldReducer,
+    growthIntelligence: growthIntelligenceReducer,
+    automation: automationReducer,
+    creatorScorecard: creatorScorecardReducer,
   },
 });
 
