@@ -1,25 +1,21 @@
 {
-  "name": "conq-hackathon",
-  "version": "0.1.0",
+  "name": "conq",
+  "version": "1.0.0",
   "private": true,
-  "description": "ConQ – AI Growth Operating System (Monorepo)",
-  "workspaces": [
-    "backend",
-    "frontend",
-    "infrastructure"
-  ],
+  "description": "ConQ — AI Creator Intelligence Platform",
   "scripts": {
-    "dev": "concurrently --names backend,frontend --prefix-colors blue,green \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:backend": "npm run dev --workspace=backend",
-    "dev:frontend": "npm run start --workspace=frontend",
-    "build": "npm run build --workspaces",
-    "test": "npm run test --workspaces --if-present",
-    "start:frontend": "npm run start --workspace=frontend",
-    "build:backend": "npm run build --workspace=backend",
-    "build:frontend": "npm run build --workspace=frontend",
-    "build:infra": "npm run build --workspace=infrastructure"
+    "dev": "concurrently --prefix-colors cyan,magenta --names BACKEND,FRONTEND \"npm run dev --prefix backend\" \"npm run start --prefix frontend\"",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run start --prefix frontend",
+    "build": "npm run build --prefix backend && npm run build --prefix frontend",
+    "build:backend": "npm run build --prefix backend",
+    "build:frontend": "npm run build --prefix frontend",
+    "test": "npm run test --prefix backend",
+    "test:security": "npm run test:security --prefix backend",
+    "deploy": "npm run deploy --prefix backend",
+    "install:all": "npm install && npm install --prefix backend && npm install --prefix frontend"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.0"
   }
 }

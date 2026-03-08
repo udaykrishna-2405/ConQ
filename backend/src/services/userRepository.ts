@@ -1,11 +1,10 @@
 // User Repository
-// DynamoDB data access layer for users. Tenant-scoped.
+// Data access layer for users. Tenant-scoped.
+// Uses DynamoDB in production, in-memory fallback for local dev.
 
 import { TenantRepository } from '../utils/repository';
 import { User } from '../models/schemas';
 import { config } from '../config';
-import { dynamoDb } from '../utils/dynamodb';
-import { QueryCommand } from '@aws-sdk/lib-dynamodb';
 
 export class UserRepository extends TenantRepository {
   constructor() {
@@ -21,20 +20,23 @@ export class UserRepository extends TenantRepository {
   }
 
   async getUserByEmail(tenantId: string, email: string): Promise<User | null> {
-    // Query using GSI on email within tenant scope
-    const result = await dynamoDb.send(
-      new QueryCommand({
-        TableName: this.tableName,
-        IndexName: 'email-index',
-        KeyConditionExpression: 'tenant_id = :tid AND email = :email',
-        ExpressionAttributeValues: {
-          ':tid': tenantId,
-          ':email': email,
-        },
-        Limit: 1,
-      })
-    );
-    return (result.Items?.[0] as User) || null;
+    // Use findByField (works for both in-memory and DynamoDB GSI fallback)
+    const found = await this.findByField<User>(tenantId, 'email', email);
+    if (found) return found;
+
+    // Try GSI query for DynamoDB
+    try {
+      const results = await this.queryByIndex<User>(
+        tenantId,
+        'email-index',
+        'tenant_id = :tid AND email = :email',
+        { ':email': email },
+        1
+      );
+      return results[0] || null;
+    } catch {
+      return null;
+    }
   }
 
   async listUsers(tenantId: string, limit = 50): Promise<User[]> {

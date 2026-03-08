@@ -8,16 +8,18 @@ import EngagementChart from '../components/dashboard/EngagementChart';
 import TopContentTable from '../components/dashboard/TopContentTable';
 import TrendAlignmentList from '../components/dashboard/TrendAlignmentList';
 import { dashboardToCsv, downloadCsv } from '../utils/exportCsv';
+import { useI18n } from '../i18n';
 
 const Dashboard: React.FC = () => {
   const dispatch = useAppDispatch();
+  const { t } = useI18n();
   const { data, loading, error } = useAppSelector((state) => state.dashboard);
 
   useEffect(() => {
     dispatch(fetchDashboard());
   }, [dispatch]);
 
-  if (loading) return <LoadingSpinner message="Loading dashboard..." />;
+  if (loading) return <LoadingSpinner message={t('dashboard.loading')} />;
 
   if (error) {
     return (
@@ -42,77 +44,75 @@ const Dashboard: React.FC = () => {
       <div className="page-header">
         <div className="page-header-row">
           <div>
-            <h2>Analytics Dashboard</h2>
+            <h2>{t('dashboard.title')}</h2>
             <p className="page-subtitle">
-              Cross-platform performance overview | Generated {new Date(data.generatedAt).toLocaleString()}
+              {t('dashboard.subtitle')} | {t('dashboard.generated')} {new Date(data.generatedAt).toLocaleString()}
             </p>
           </div>
           <button className="btn-secondary" onClick={handleExportCsv}>
-            Export CSV
+            {t('dashboard.exportCsv')}
           </button>
         </div>
       </div>
 
-      {/* Metric Cards Row */}
+      {/* Metric Cards */}
       <div className="metrics-grid">
         <MetricCard
-          title="Total Reach"
+          title={t('dashboard.totalReach')}
           value={unified.totalReach}
-          subtitle="YouTube views + Instagram reach"
+          subtitle={t('dashboard.reachSubtitle')}
           color="#3498db"
         />
         <MetricCard
-          title="Total Engagements"
+          title={t('dashboard.totalEngagements')}
           value={unified.totalEngagements}
-          subtitle="Likes, comments, shares, saves"
+          subtitle={t('dashboard.engagementSubtitle')}
           color="#2ecc71"
         />
         <MetricCard
-          title="Engagement Rate"
+          title={t('dashboard.engagementRate')}
           value={`${(unified.weightedEngagementRate * 100).toFixed(2)}%`}
-          subtitle="Weighted cross-platform average"
+          subtitle={t('dashboard.rateSubtitle')}
           color="#e67e22"
         />
         <MetricCard
-          title="Content Published"
+          title={t('dashboard.contentPublished')}
           value={unified.contentCount}
-          subtitle={`${platforms.youtube.aggregated.videoCount} videos, ${platforms.instagram.aggregated.postCount} posts`}
+          subtitle={`${platforms.youtube.aggregated.videoCount} ${t('common.videos')}, ${platforms.instagram.aggregated.postCount} ${t('common.posts')}`}
           color="#9b59b6"
         />
       </div>
 
-      {/* Platform Summary Cards */}
+      {/* Platform Summary */}
       <div className="platform-summary-grid">
         <div className="platform-card">
-          <h3>YouTube</h3>
+          <h3>{t('dashboard.youtube')}</h3>
           <div className="platform-stats">
             <div><strong>{platforms.youtube.channel.title}</strong></div>
-            <div>{platforms.youtube.channel.subscriberCount.toLocaleString()} subscribers</div>
-            <div>{platforms.youtube.aggregated.totalViews.toLocaleString()} total views</div>
-            <div>{(platforms.youtube.aggregated.avgEngagementRate * 100).toFixed(2)}% avg engagement</div>
+            <div>{platforms.youtube.channel.subscriberCount.toLocaleString()} {t('common.subscribers')}</div>
+            <div>{platforms.youtube.aggregated.totalViews.toLocaleString()} {t('common.totalViews')}</div>
+            <div>{(platforms.youtube.aggregated.avgEngagementRate * 100).toFixed(2)}% {t('common.avgEngagement')}</div>
           </div>
         </div>
         <div className="platform-card">
-          <h3>Instagram</h3>
+          <h3>{t('dashboard.instagram')}</h3>
           <div className="platform-stats">
             <div><strong>@{platforms.instagram.profile.username}</strong></div>
-            <div>{platforms.instagram.profile.followersCount.toLocaleString()} followers</div>
-            <div>{platforms.instagram.aggregated.totalReach.toLocaleString()} total reach</div>
-            <div>{(platforms.instagram.aggregated.avgEngagementRate * 100).toFixed(2)}% avg engagement</div>
+            <div>{platforms.instagram.profile.followersCount.toLocaleString()} {t('common.followers')}</div>
+            <div>{platforms.instagram.aggregated.totalReach.toLocaleString()} {t('common.totalReach')}</div>
+            <div>{(platforms.instagram.aggregated.avgEngagementRate * 100).toFixed(2)}% {t('common.avgEngagement')}</div>
           </div>
         </div>
       </div>
 
-      {/* Charts Row */}
+      {/* Charts */}
       <div className="charts-grid">
         <PlatformBreakdownChart unified={unified} />
         <EngagementChart topContent={topContent} />
       </div>
 
-      {/* Top Content Table */}
       <TopContentTable items={topContent} />
 
-      {/* Trend Alignment */}
       {trendAlignment.length > 0 && (
         <TrendAlignmentList items={trendAlignment} />
       )}

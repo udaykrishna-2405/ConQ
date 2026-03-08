@@ -10,7 +10,7 @@ import { config } from '../config';
 export interface ContentShieldRequest {
   text: string;
   platform: 'youtube' | 'instagram';
-  contentType?: 'video' | 'post' | 'story' | 'reel' | 'short';
+  contentType?: string;
   checkCopyright?: boolean;
   checkPolicy?: boolean;
   checkBrandSafety?: boolean;

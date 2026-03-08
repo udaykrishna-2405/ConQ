@@ -51,7 +51,7 @@ export const viralityPredictSchema = z.object({
   description: z.string().max(5000).trim().optional(),
   tags: z.array(z.string().max(50).trim()).max(30).optional(),
   platform: z.enum(['youtube', 'instagram']),
-  language: z.string().max(10).optional(),
+  language: z.string().max(50).optional(),
   historicalEngagementRate: z.number().min(0).max(1).optional(),
   followerCount: z.number().int().min(0).max(1_000_000_000).optional(),
 });
@@ -60,7 +60,7 @@ export const viralityPredictSchema = z.object({
 
 export const trendQuerySchema = z.object({
   region: z.string().max(50).trim().optional(),
-  language: z.string().max(10).optional(),
+  language: z.string().max(50).optional(),
   category: z.enum(['emerging', 'trending', 'viral', 'declining']).optional(),
   limit: z.string().regex(/^\d+$/).optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -77,8 +77,8 @@ export const aiStudioGenerateSchema = z.object({
   topic: z.string().min(1, 'Topic is required').max(500).trim(),
   platform: z.enum(['youtube', 'instagram']),
   tone: z.string().max(50).trim().optional(),
-  language: z.string().max(10).optional(),
-  targetLanguages: z.array(z.string().max(30)).max(10).optional(),
+  language: z.string().max(50).optional(),
+  targetLanguages: z.array(z.string().max(50)).max(10).optional(),
   sourceFormat: z.string().max(100).trim().optional(),
   targetFormats: z.array(z.string().max(50)).max(10).optional(),
   durationDays: z.number().int().min(1).max(90).optional(),
@@ -107,7 +107,7 @@ export const monetizationReportSchema = z.object({
 export const contentShieldSchema = z.object({
   text: z.string().min(1, 'Text is required').max(10000),
   platform: z.enum(['youtube', 'instagram']),
-  contentType: z.enum(['video', 'post', 'story', 'reel', 'short']).optional(),
+  contentType: z.string().max(50).trim().optional(),
   checkCopyright: z.boolean().optional(),
   checkPolicy: z.boolean().optional(),
   checkBrandSafety: z.boolean().optional(),
@@ -126,7 +126,7 @@ export const growthForecastSchema = z.object({
 
 export const competitorBenchmarkSchema = z.object({
   platform: z.enum(['youtube', 'instagram']),
-  niche: z.string().min(1, 'Niche is required').max(100).trim(),
+  niche: z.string().max(100).trim().optional(),
   followerCount: z.number().int().min(0).max(1_000_000_000).optional(),
   engagementRate: z.number().min(0).max(1).optional(),
 });
@@ -138,7 +138,7 @@ export const scheduleSchema = z.object({
   platform: z.enum(['youtube', 'instagram']),
   contentType: z.string().max(100).trim().optional(),
   preferredTime: z.string().max(20).optional(),
-  timezone: z.string().max(50).optional(),
+  timezone: z.string().max(100).optional(),
   niche: z.string().max(100).trim().optional(),
 });
 
@@ -172,8 +172,58 @@ export const creatorScorecardSchema = z.object({
   engagementRate: z.number().min(0).max(1).optional(),
   postsPerWeek: z.number().int().min(0).max(50).optional(),
   avgViews: z.number().int().min(0).optional(),
-  contentQuality: z.number().int().min(0).max(100).optional(),
+  contentQuality: z.number().min(0).max(10).optional(),
 });
+
+// ── Spec-Aligned Schemas (for /api/* alias routes) ──
+
+/** POST /api/ai/generate — simplified AI Studio endpoint */
+export const aiGenerateSchema = z.object({
+  topic: z.string().min(1, 'Topic is required').max(500).trim(),
+  platform: z.enum(['youtube', 'instagram']).default('youtube'),
+  tone: z.string().max(100).trim().optional(),
+  type: z.enum(['caption', 'hook', 'script_short', 'script_long', 'cta', 'translation', 'repurpose', 'calendar']).default('caption'),
+});
+
+/** POST /api/content/check — simplified content shield endpoint */
+export const contentCheckSchema = z.object({
+  content: z.string().min(1, 'Content is required').max(10000),
+  platform: z.enum(['youtube', 'instagram']).optional().default('youtube'),
+  text: z.string().max(10000).optional(), // accept either 'content' or 'text'
+});
+
+/** POST /api/growth/analyze — simplified growth intelligence endpoint */
+export const growthAnalyzeSchema = z.object({
+  likes: z.number().int().min(0).optional(),
+  comments: z.number().int().min(0).optional(),
+  views: z.number().int().min(0).optional(),
+  followers: z.number().int().min(0).max(1_000_000_000).optional(),
+  platform: z.enum(['youtube', 'instagram']).default('youtube'),
+  timeframeMonths: z.number().int().min(1).max(24).optional(),
+});
+
+/** POST /api/creator/score — simplified creator scorecard endpoint */
+export const creatorScoreSchema = z.object({
+  platform: z.enum(['youtube', 'instagram']).default('youtube'),
+  followers: z.number().int().min(0).max(1_000_000_000).optional(),
+  engagementRate: z.number().min(0).max(1).optional(),
+  postsPerWeek: z.number().int().min(0).max(50).optional(),
+  niche: z.string().max(100).trim().optional(),
+});
+
+/** POST /api/monetization/predict — simplified monetization endpoint */
+export const monetizationPredictSchema = z.object({
+  views: z.number().int().min(0).optional(),
+  platform: z.enum(['youtube', 'instagram']).default('youtube'),
+  niche: z.string().max(100).trim().optional(),
+  followers: z.number().int().min(0).max(1_000_000_000).optional(),
+});
+
+export type AiGenerateInput = z.infer<typeof aiGenerateSchema>;
+export type ContentCheckInput = z.infer<typeof contentCheckSchema>;
+export type GrowthAnalyzeInput = z.infer<typeof growthAnalyzeSchema>;
+export type CreatorScoreInput = z.infer<typeof creatorScoreSchema>;
+export type MonetizationPredictInput = z.infer<typeof monetizationPredictSchema>;
 
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;

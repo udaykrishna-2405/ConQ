@@ -104,7 +104,9 @@ export class CreatorScorecardService {
     let engagementRate = request.engagementRate || 0.04;
     let avgViews = request.avgViews || 2000;
     const postsPerWeek = request.postsPerWeek || 3;
-    const contentQuality = request.contentQuality || 70;
+    // contentQuality arrives as 0-10 from frontend, scale to 0-100
+    const rawQuality = request.contentQuality;
+    const contentQuality = rawQuality !== undefined ? Math.round(rawQuality * 10) : 70;
 
     try {
       if (platform === 'youtube') {

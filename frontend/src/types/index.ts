@@ -323,11 +323,11 @@ export interface MonetizationRequest {
 export interface MonetizationReport {
   reportId: string;
   generatedAt: string;
-  revenue: { monthlyEstimate: number; yearlyEstimate: number; currency: string; breakdown: { source: string; amount: number; percentage: number }[] };
-  cpmRpm: { cpm: number; rpm: number; niche: string; trend: string };
-  brandMatches: { brand: string; fit: number; category: string; estimatedDealValue: number; currency: string }[];
-  sponsoredPostPrediction: { estimatedRate: number; currency: string; factors: { factor: string; impact: string }[] };
-  audienceInterests: { interest: string; affinity: number; monetizationPotential: string }[];
+  revenueEstimate: { monthlyLow: number; monthlyHigh: number; yearlyLow: number; yearlyHigh: number; currency: string; breakdown: { source: string; amount: number; percentage: number }[] };
+  cpmRpmForecast: { currentCpm: number; forecastedCpm: number; currentRpm: number; forecastedRpm: number; trend: string; confidence: number };
+  brandMatches: { brandName: string; industry: string; matchScore: number; estimatedDealValue: number; currency: string; reason: string }[];
+  sponsoredPostPredictor: { estimatedRate: number; currency: string; performanceScore: number; expectedReach: number; expectedEngagement: number; recommendation: string };
+  audienceInterests: { interest: string; percentage: number; monetizationPotential: string }[];
 }
 
 // ── Content Shield ──

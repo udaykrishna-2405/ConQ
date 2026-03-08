@@ -1,0 +1,208 @@
+{
+  "Comment": "ConQ Document Processing Pipeline - Step Functions State Machine",
+  "StartAt": "UpdateStatusProcessing",
+  "States": {
+    "UpdateStatusProcessing": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "Parameters": {
+        "TableName": "${DYNAMODB_TABLE_NAME}",
+        "Key": {
+          "document_id": {
+            "S.$": "$.document_id"
+          }
+        },
+        "UpdateExpression": "SET processing_status = :status, started_at = :ts",
+        "ExpressionAttributeValues": {
+          ":status": {
+            "S": "PROCESSING"
+          },
+          ":ts": {
+            "S.$": "$$.State.EnteredTime"
+          }
+        }
+      },
+      "ResultPath": "$.statusUpdate",
+      "Next": "DocumentProcessor"
+    },
+
+    "DocumentProcessor": {
+      "Type": "Task",
+      "Resource": "${DocumentProcessorLambdaArn}",
+      "Comment": "Stage 1-2: Document Ingestion & Text Extraction",
+      "InputPath": "$",
+      "ResultPath": "$.processorResult",
+      "OutputPath": "$.processorResult",
+      "TimeoutSeconds": 120,
+      "Retry": [
+        {
+          "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException"],
+          "IntervalSeconds": 5,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "ResultPath": "$.error",
+          "Next": "HandleError"
+        }
+      ],
+      "Next": "CheckTextExtracted"
+    },
+
+    "CheckTextExtracted": {
+      "Type": "Choice",
+      "Comment": "Verify text extraction succeeded",
+      "Choices": [
+        {
+          "Variable": "$.word_count",
+          "NumericGreaterThan": 0,
+          "Next": "EntityExtractor"
+        }
+      ],
+      "Default": "HandleNoText"
+    },
+
+    "HandleNoText": {
+      "Type": "Pass",
+      "Result": {
+        "error": "No text could be extracted from the document"
+      },
+      "ResultPath": "$.error",
+      "Next": "HandleError"
+    },
+
+    "EntityExtractor": {
+      "Type": "Task",
+      "Resource": "${EntityExtractorLambdaArn}",
+      "Comment": "Stage 3: Entity Extraction & Tag Generation",
+      "InputPath": "$",
+      "ResultPath": "$.extractorResult",
+      "OutputPath": "$.extractorResult",
+      "TimeoutSeconds": 120,
+      "Retry": [
+        {
+          "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException"],
+          "IntervalSeconds": 5,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "ResultPath": "$.error",
+          "Next": "HandleError"
+        }
+      ],
+      "Next": "Summarizer"
+    },
+
+    "Summarizer": {
+      "Type": "Task",
+      "Resource": "${SummarizerLambdaArn}",
+      "Comment": "Stage 4-5: AI Summarization & Classification",
+      "InputPath": "$",
+      "ResultPath": "$.summarizerResult",
+      "OutputPath": "$.summarizerResult",
+      "TimeoutSeconds": 180,
+      "Retry": [
+        {
+          "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException"],
+          "IntervalSeconds": 10,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "ResultPath": "$.error",
+          "Next": "HandleError"
+        }
+      ],
+      "Next": "StoreResults"
+    },
+
+    "StoreResults": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "Comment": "Stage 6: Store structured results in DynamoDB",
+      "Parameters": {
+        "TableName": "${DYNAMODB_TABLE_NAME}",
+        "Key": {
+          "document_id": {
+            "S.$": "$.document_id"
+          }
+        },
+        "UpdateExpression": "SET processing_status = :status, summary = :summary, entities = :entities, keywords = :keywords, tags = :tags, topics = :topics, completed_at = :ts",
+        "ExpressionAttributeValues": {
+          ":status": {
+            "S": "COMPLETED"
+          },
+          ":summary": {
+            "S.$": "$.summary"
+          },
+          ":entities": {
+            "S.$": "$.entities"
+          },
+          ":keywords": {
+            "S.$": "$.keywords"
+          },
+          ":tags": {
+            "S.$": "$.tags"
+          },
+          ":topics": {
+            "S.$": "$.topics"
+          },
+          ":ts": {
+            "S.$": "$$.State.EnteredTime"
+          }
+        }
+      },
+      "ResultPath": "$.storeResult",
+      "Next": "PipelineSuccess"
+    },
+
+    "PipelineSuccess": {
+      "Type": "Succeed",
+      "Comment": "Document processing pipeline completed successfully"
+    },
+
+    "HandleError": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "Comment": "Update DynamoDB with failure status",
+      "Parameters": {
+        "TableName": "${DYNAMODB_TABLE_NAME}",
+        "Key": {
+          "document_id": {
+            "S.$": "$.document_id"
+          }
+        },
+        "UpdateExpression": "SET processing_status = :status, error_message = :err, failed_at = :ts",
+        "ExpressionAttributeValues": {
+          ":status": {
+            "S": "FAILED"
+          },
+          ":err": {
+            "S.$": "States.Format('Pipeline failed: {}', $.error)"
+          },
+          ":ts": {
+            "S.$": "$$.State.EnteredTime"
+          }
+        }
+      },
+      "ResultPath": "$.errorUpdate",
+      "Next": "PipelineFailed"
+    },
+
+    "PipelineFailed": {
+      "Type": "Fail",
+      "Cause": "Document processing pipeline failed",
+      "Error": "PipelineError"
+    }
+  }
+}

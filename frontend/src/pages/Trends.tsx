@@ -3,6 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useAppDispatch, useAppSelector } from '../hooks/useAppDispatch';
 import { fetchTrends } from '../store/slices/trendsSlice';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import { useI18n } from '../i18n';
 
 const CATEGORY_COLORS: Record<string, string> = {
   viral: '#e74c3c',
@@ -13,6 +14,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 const Trends: React.FC = () => {
   const dispatch = useAppDispatch();
+  const { t } = useI18n();
   const { data, loading, error } = useAppSelector((state) => state.trends);
 
   const [filters, setFilters] = useState({
@@ -39,22 +41,15 @@ const Trends: React.FC = () => {
   return (
     <div className="page-container">
       <div className="page-header">
-        <h2>Trend Explorer</h2>
-        <p className="page-subtitle">
-          Real-time trend detection with velocity-based scoring
-        </p>
+        <h2>{t('trends.title')}</h2>
+        <p className="page-subtitle">{t('trends.subtitle')}</p>
       </div>
 
-      {/* Filter Form */}
       <form onSubmit={handleFilter} className="filter-form">
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="trend-region">Region</label>
-            <select
-              id="trend-region"
-              value={filters.region}
-              onChange={(e) => setFilters({ ...filters, region: e.target.value })}
-            >
+            <select id="trend-region" value={filters.region} onChange={(e) => setFilters({ ...filters, region: e.target.value })}>
               <option value="">All India</option>
               <option value="maharashtra">Maharashtra</option>
               <option value="karnataka">Karnataka</option>
@@ -65,11 +60,7 @@ const Trends: React.FC = () => {
 
           <div className="form-group">
             <label htmlFor="trend-lang">Language</label>
-            <select
-              id="trend-lang"
-              value={filters.language}
-              onChange={(e) => setFilters({ ...filters, language: e.target.value })}
-            >
+            <select id="trend-lang" value={filters.language} onChange={(e) => setFilters({ ...filters, language: e.target.value })}>
               <option value="">All Languages</option>
               <option value="en">English</option>
               <option value="hi">Hindi</option>
@@ -80,13 +71,9 @@ const Trends: React.FC = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="trend-cat">Category</label>
-            <select
-              id="trend-cat"
-              value={filters.category}
-              onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-            >
-              <option value="">All Categories</option>
+            <label htmlFor="trend-cat">{t('trends.filterCategory')}</label>
+            <select id="trend-cat" value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })}>
+              <option value="">{t('trends.filterAll')}</option>
               <option value="viral">Viral</option>
               <option value="trending">Trending</option>
               <option value="emerging">Emerging</option>
@@ -96,28 +83,21 @@ const Trends: React.FC = () => {
 
           <div className="form-group">
             <label htmlFor="trend-limit">Limit</label>
-            <input
-              id="trend-limit"
-              type="number"
-              value={filters.limit}
-              onChange={(e) => setFilters({ ...filters, limit: e.target.value })}
-              min="1"
-              max="50"
-            />
+            <input id="trend-limit" type="number" value={filters.limit}
+              onChange={(e) => setFilters({ ...filters, limit: e.target.value })} min="1" max="50" />
           </div>
 
           <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? 'Loading...' : 'Apply Filters'}
+            {loading ? t('common.loading') : t('common.analyze')}
           </button>
         </div>
       </form>
 
-      {loading && <LoadingSpinner message="Fetching trends..." />}
+      {loading && <LoadingSpinner message={t('trends.loading')} />}
       {error && <div className="error-banner">{error}</div>}
 
       {data && (
         <>
-          {/* Summary Cards */}
           <div className="trend-summary">
             <div className="summary-item" style={{ borderColor: CATEGORY_COLORS.viral }}>
               <span className="summary-count">{data.summary.viral}</span>
@@ -137,10 +117,9 @@ const Trends: React.FC = () => {
             </div>
           </div>
 
-          {/* Trend Chart */}
           {data.trends.length > 0 && (
             <div className="chart-container">
-              <h3>Trend Scores</h3>
+              <h3>{t('trends.trendScore')}</h3>
               <ResponsiveContainer width="100%" height={400}>
                 <BarChart
                   data={data.trends.slice(0, 15).map(t => ({
@@ -154,9 +133,9 @@ const Trends: React.FC = () => {
                   <XAxis dataKey="keyword" angle={-40} textAnchor="end" interval={0} fontSize={11} />
                   <YAxis domain={[0, 100]} />
                   <Tooltip />
-                  <Bar dataKey="score" name="Trend Score">
-                    {data.trends.slice(0, 15).map((t, idx) => (
-                      <Cell key={idx} fill={CATEGORY_COLORS[t.category] || '#95a5a6'} />
+                  <Bar dataKey="score" name={t('trends.trendScore')}>
+                    {data.trends.slice(0, 15).map((tr, idx) => (
+                      <Cell key={idx} fill={CATEGORY_COLORS[tr.category] || '#95a5a6'} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -164,15 +143,14 @@ const Trends: React.FC = () => {
             </div>
           )}
 
-          {/* Trend Table */}
           <div className="table-container">
-            <h3>All Trends ({data.totalTrends} total)</h3>
+            <h3>{t('trends.title')} ({data.totalTrends} total)</h3>
             <table className="data-table">
               <thead>
                 <tr>
                   <th>Keyword</th>
                   <th>Category</th>
-                  <th>Score</th>
+                  <th>{t('trends.trendScore')}</th>
                   <th>Velocity</th>
                   <th>Growth</th>
                   <th>Region</th>
@@ -184,10 +162,7 @@ const Trends: React.FC = () => {
                   <tr key={trend.trendId}>
                     <td><strong>{trend.keyword}</strong></td>
                     <td>
-                      <span
-                        className="category-badge"
-                        style={{ backgroundColor: CATEGORY_COLORS[trend.category] }}
-                      >
+                      <span className="category-badge" style={{ backgroundColor: CATEGORY_COLORS[trend.category] }}>
                         {trend.category}
                       </span>
                     </td>

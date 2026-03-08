@@ -1,0 +1,50 @@
+{
+  "Comment": "ConQ Document Processing Pipeline - Workflow Configuration",
+  "StateMachineDefinition": "state_machine.asl.json",
+  "Pipeline": {
+    "Stage1": {
+      "Name": "Document Ingestion",
+      "Lambda": "conq-document-processor",
+      "Description": "Downloads document from S3 and prepares for processing"
+    },
+    "Stage2": {
+      "Name": "Text Extraction",
+      "Lambda": "conq-document-processor",
+      "Description": "Extracts raw text from PDF, DOCX, TXT, HTML using Textract"
+    },
+    "Stage3": {
+      "Name": "Entity Extraction",
+      "Lambda": "conq-entity-extractor",
+      "Description": "Extracts named entities, key phrases, sentiment using Comprehend"
+    },
+    "Stage4": {
+      "Name": "AI Summarization",
+      "Lambda": "conq-summarizer",
+      "Description": "Generates document summary and classification using Bedrock Claude"
+    },
+    "Stage5": {
+      "Name": "Tag Generation",
+      "Lambda": "conq-entity-extractor + conq-summarizer",
+      "Description": "Auto-generates tags from entities, keywords, and AI analysis"
+    },
+    "Stage6": {
+      "Name": "Store Results",
+      "Lambda": "DynamoDB Direct Integration",
+      "Description": "Persists structured results to ConQInsights DynamoDB table"
+    }
+  },
+  "ErrorHandling": {
+    "RetryPolicy": {
+      "MaxAttempts": 2,
+      "IntervalSeconds": 5,
+      "BackoffRate": 2.0
+    },
+    "FailureAction": "Update DynamoDB with FAILED status and error message"
+  },
+  "Timeouts": {
+    "DocumentProcessor": "120 seconds",
+    "EntityExtractor": "120 seconds",
+    "Summarizer": "180 seconds",
+    "TotalPipeline": "15 minutes"
+  }
+}

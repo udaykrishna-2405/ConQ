@@ -3,9 +3,11 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useAppDispatch, useAppSelector } from '../hooks/useAppDispatch';
 import { predictVirality, clearPrediction } from '../store/slices/predictionSlice';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import { useI18n } from '../i18n';
 
 const ViralityPredictor: React.FC = () => {
   const dispatch = useAppDispatch();
+  const { t } = useI18n();
   const { result, loading, error } = useAppSelector((state) => state.prediction);
 
   const [form, setForm] = useState({
@@ -49,40 +51,38 @@ const ViralityPredictor: React.FC = () => {
   return (
     <div className="page-container">
       <div className="page-header">
-        <h2>Virality Predictor</h2>
-        <p className="page-subtitle">
-          AI-powered content scoring with explainable feature analysis
-        </p>
+        <h2>{t('predict.title')}</h2>
+        <p className="page-subtitle">{t('predict.subtitle')}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="predictor-form">
         <div className="form-group">
-          <label htmlFor="pred-title">Content Title *</label>
+          <label htmlFor="pred-title">{t('predict.titleLabel')}</label>
           <input
             id="pred-title"
             name="title"
             value={form.title}
             onChange={handleChange}
             required
-            placeholder="Enter your content title"
+            placeholder={t('predict.titlePlaceholder')}
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="pred-desc">Description</label>
+          <label htmlFor="pred-desc">{t('predict.descLabel')}</label>
           <textarea
             id="pred-desc"
             name="description"
             value={form.description}
             onChange={handleChange}
             rows={3}
-            placeholder="Content description (optional)"
+            placeholder={t('predict.descPlaceholder')}
           />
         </div>
 
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="pred-tags">Tags (comma-separated)</label>
+            <label htmlFor="pred-tags">{t('predict.categoryLabel')}</label>
             <input
               id="pred-tags"
               name="tags"
@@ -92,17 +92,17 @@ const ViralityPredictor: React.FC = () => {
             />
           </div>
           <div className="form-group">
-            <label htmlFor="pred-platform">Platform *</label>
+            <label htmlFor="pred-platform">{t('predict.platformLabel')}</label>
             <select id="pred-platform" name="platform" value={form.platform} onChange={handleChange}>
-              <option value="youtube">YouTube</option>
-              <option value="instagram">Instagram</option>
+              <option value="youtube">{t('common.youtube')}</option>
+              <option value="instagram">{t('common.instagram')}</option>
             </select>
           </div>
         </div>
 
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="pred-followers">Follower Count</label>
+            <label htmlFor="pred-followers">{t('common.followers')}</label>
             <input
               id="pred-followers"
               name="followerCount"
@@ -113,7 +113,7 @@ const ViralityPredictor: React.FC = () => {
             />
           </div>
           <div className="form-group">
-            <label htmlFor="pred-engagement">Historical Engagement Rate</label>
+            <label htmlFor="pred-engagement">{t('dashboard.engagementRate')}</label>
             <input
               id="pred-engagement"
               name="historicalEngagementRate"
@@ -130,20 +130,19 @@ const ViralityPredictor: React.FC = () => {
 
         <div className="form-actions">
           <button type="submit" className="btn-primary" disabled={loading || !form.title.trim()}>
-            {loading ? 'Predicting...' : 'Predict Virality'}
+            {loading ? t('predict.predictingBtn') : t('predict.predictBtn')}
           </button>
           <button type="button" className="btn-secondary" onClick={handleClear}>
-            Clear
+            {t('common.clear')}
           </button>
         </div>
       </form>
 
-      {loading && <LoadingSpinner message="Running virality prediction..." />}
+      {loading && <LoadingSpinner message={t('predict.predictingBtn')} />}
       {error && <div className="error-banner">{error}</div>}
 
       {result && (
         <div className="prediction-results">
-          {/* Score Display */}
           <div className="score-display">
             <div className="score-circle" style={{ borderColor: scoreColor(result.score) }}>
               <span className="score-number">{result.score}</span>
@@ -154,15 +153,14 @@ const ViralityPredictor: React.FC = () => {
                 {result.riskLevel || (result.score >= 70 ? 'High Viral Potential' : result.score >= 40 ? 'Moderate Potential' : 'Low Potential')}
               </div>
               <div className="score-confidence">
-                Confidence: {(result.confidence * 100).toFixed(0)}%
+                {t('predict.confidence')}: {(result.confidence * 100).toFixed(0)}%
               </div>
             </div>
           </div>
 
-          {/* Feature Impact Chart */}
           {result.explanation.length > 0 && (
             <div className="chart-container">
-              <h3>Feature Impact Analysis (SHAP-style)</h3>
+              <h3>{t('predict.factors')}</h3>
               <ResponsiveContainer width="100%" height={Math.max(250, result.explanation.length * 30)}>
                 <BarChart
                   data={result.explanation.slice(0, 12).map(f => ({
@@ -189,6 +187,13 @@ const ViralityPredictor: React.FC = () => {
               </ResponsiveContainer>
             </div>
           )}
+        </div>
+      )}
+
+      {!result && !loading && (
+        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🚀</div>
+          <p>{t('predict.emptyState')}</p>
         </div>
       )}
     </div>

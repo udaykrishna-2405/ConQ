@@ -137,7 +137,7 @@ export class AutomationService {
   }
 
   async generateSchedule(tenantId: string, request: ScheduleRequest): Promise<ScheduleResult> {
-    const { platform, timezone = 'IST', niche = 'default', contentType = 'video' } = request;
+    const { platform, timezone = 'IST', contentType = 'video' } = request;
     const scheduleId = uuidv4();
 
     const days = Object.keys(PEAK_TIMES);
@@ -255,7 +255,7 @@ export class AutomationService {
   }
 
   async runABTest(tenantId: string, request: ABTestRequest): Promise<ABTestResult> {
-    const { platform, variantA, variantB, niche = 'default', followerCount = 10000 } = request;
+    const { platform, variantA, variantB, followerCount = 10000 } = request;
     const testId = uuidv4();
 
     const scoreVariant = (title: string, desc?: string): ABVariantPrediction => {

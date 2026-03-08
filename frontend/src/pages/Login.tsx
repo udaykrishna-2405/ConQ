@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../hooks/useAppDispatch';
 import { login, register, clearError } from '../store/slices/authSlice';
+import { useI18n } from '../i18n';
 
 const Login: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const { loading, error } = useAppSelector((state) => state.auth);
 
   const [isRegister, setIsRegister] = useState(false);
@@ -49,18 +51,18 @@ const Login: React.FC = () => {
     <div className="login-page">
       <div className="login-container">
         <div className="login-header">
-          <h1>ConQ</h1>
-          <p>AI-Powered Growth Operating System</p>
+          <h1>{t('login.title')}</h1>
+          <p>{t('login.tagline')}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
-          <h2>{isRegister ? 'Create Account' : 'Sign In'}</h2>
+          <h2>{isRegister ? t('login.createAccount') : t('login.signIn')}</h2>
 
           {error && <div className="form-error">{error}</div>}
 
           {isRegister && (
             <div className="form-group">
-              <label htmlFor="name">Full Name</label>
+              <label htmlFor="name">{t('login.name')}</label>
               <input
                 id="name"
                 name="name"
@@ -68,13 +70,13 @@ const Login: React.FC = () => {
                 value={form.name}
                 onChange={handleChange}
                 required={isRegister}
-                placeholder="Your full name"
+                placeholder={t('login.namePlaceholder')}
               />
             </div>
           )}
 
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">{t('login.email')}</label>
             <input
               id="email"
               name="email"
@@ -82,12 +84,12 @@ const Login: React.FC = () => {
               value={form.email}
               onChange={handleChange}
               required
-              placeholder="you@example.com"
+              placeholder={t('login.emailPlaceholder')}
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Password</label>
+            <label htmlFor="password">{t('login.password')}</label>
             <input
               id="password"
               name="password"
@@ -96,12 +98,12 @@ const Login: React.FC = () => {
               onChange={handleChange}
               required
               minLength={8}
-              placeholder="Min 8 characters"
+              placeholder={t('login.passwordPlaceholder')}
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="tenantId">Organization ID</label>
+            <label htmlFor="tenantId">{t('login.tenantId')}</label>
             <input
               id="tenantId"
               name="tenantId"
@@ -109,16 +111,20 @@ const Login: React.FC = () => {
               value={form.tenantId}
               onChange={handleChange}
               required
-              placeholder="Your org tenant ID"
+              placeholder={t('login.tenantPlaceholder')}
             />
           </div>
 
           <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? 'Please wait...' : isRegister ? 'Create Account' : 'Sign In'}
+            {loading
+              ? t('login.pleaseWait')
+              : isRegister
+                ? t('login.createAccount')
+                : t('login.signIn')}
           </button>
 
           <p className="login-toggle">
-            {isRegister ? 'Already have an account?' : "Don't have an account?"}{' '}
+            {isRegister ? t('login.hasAccount') : t('login.noAccount')}{' '}
             <button
               type="button"
               className="btn-link"
@@ -127,7 +133,7 @@ const Login: React.FC = () => {
                 dispatch(clearError());
               }}
             >
-              {isRegister ? 'Sign In' : 'Create Account'}
+              {isRegister ? t('login.signIn') : t('login.createAccount')}
             </button>
           </p>
         </form>

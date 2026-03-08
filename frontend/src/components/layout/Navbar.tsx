@@ -1,16 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useAppDispatch';
 import { logout } from '../../store/slices/authSlice';
 import { useI18n } from '../../i18n';
+import LanguageSelector from '../common/LanguageSelector';
+
+const MORE_LINKS = [
+  { to: '/ai-studio', label: 'AI Studio' },
+  { to: '/monetization', label: 'Monetization' },
+  { to: '/content-shield', label: 'Content Shield' },
+  { to: '/growth-intelligence', label: 'Growth Intelligence' },
+  { to: '/automation', label: 'Automation' },
+  { to: '/creator-scorecard', label: 'Creator Scorecard' },
+];
 
 const Navbar: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAppSelector((state) => state.auth.user);
-  const { language, setLanguage, t } = useI18n();
+  const { t } = useI18n();
   const [moreOpen, setMoreOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setMoreOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Close dropdown on route change
+  useEffect(() => {
+    setMoreOpen(false);
+  }, [location.pathname]);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -20,7 +47,7 @@ const Navbar: React.FC = () => {
   if (location.pathname === '/login') return null;
 
   const isActive = (path: string) => location.pathname === path ? 'active' : '';
-  const isMoreActive = ['/ai-studio', '/monetization', '/content-shield', '/growth-intelligence', '/automation', '/creator-scorecard'].includes(location.pathname);
+  const isMoreActive = MORE_LINKS.some(l => l.to === location.pathname);
 
   return (
     <nav className="navbar">
@@ -30,47 +57,39 @@ const Navbar: React.FC = () => {
       </div>
 
       <div className="navbar-links">
-        <Link to="/dashboard" className={isActive('/dashboard')}>
-          {t('nav.dashboard')}
-        </Link>
-        <Link to="/nlp" className={isActive('/nlp')}>
-          {t('nav.nlp')}
-        </Link>
-        <Link to="/predict" className={isActive('/predict')}>
-          {t('nav.predict')}
-        </Link>
-        <Link to="/trends" className={isActive('/trends')}>
-          {t('nav.trends')}
-        </Link>
-        <div className="nav-dropdown">
+        <Link to="/dashboard" className={isActive('/dashboard')}>{t('nav.dashboard')}</Link>
+        <Link to="/nlp" className={isActive('/nlp')}>{t('nav.nlp')}</Link>
+        <Link to="/predict" className={isActive('/predict')}>{t('nav.predict')}</Link>
+        <Link to="/trends" className={isActive('/trends')}>{t('nav.trends')}</Link>
+
+        {/* More Dropdown */}
+        <div className="nav-dropdown" ref={dropdownRef}>
           <button
             className={`nav-dropdown-toggle ${isMoreActive ? 'active' : ''}`}
-            onClick={() => setMoreOpen(!moreOpen)}
-            onBlur={() => setTimeout(() => setMoreOpen(false), 200)}
+            onClick={() => setMoreOpen(prev => !prev)}
           >
-            More
+            More ▾
           </button>
           {moreOpen && (
             <div className="nav-dropdown-menu">
-              <Link to="/ai-studio" className={isActive('/ai-studio')} onClick={() => setMoreOpen(false)}>AI Studio</Link>
-              <Link to="/monetization" className={isActive('/monetization')} onClick={() => setMoreOpen(false)}>Monetization</Link>
-              <Link to="/content-shield" className={isActive('/content-shield')} onClick={() => setMoreOpen(false)}>Content Shield</Link>
-              <Link to="/growth-intelligence" className={isActive('/growth-intelligence')} onClick={() => setMoreOpen(false)}>Growth Intelligence</Link>
-              <Link to="/automation" className={isActive('/automation')} onClick={() => setMoreOpen(false)}>Automation</Link>
-              <Link to="/creator-scorecard" className={isActive('/creator-scorecard')} onClick={() => setMoreOpen(false)}>Creator Scorecard</Link>
+              {MORE_LINKS.map(({ to, label }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  className={isActive(to)}
+                  onClick={() => setMoreOpen(false)}
+                >
+                  {label}
+                </Link>
+              ))}
             </div>
           )}
         </div>
       </div>
 
       <div className="navbar-user">
-        <button
-          className="lang-toggle"
-          onClick={() => setLanguage(language === 'en' ? 'hi' : 'en')}
-          title={language === 'en' ? 'हिन्दी में बदलें' : 'Switch to English'}
-        >
-          {language === 'en' ? 'हिन्दी' : 'EN'}
-        </button>
+        {/* 22-language selector — replaces old toggle button */}
+        <LanguageSelector />
         {user && (
           <>
             <span className="user-name">{user.name}</span>

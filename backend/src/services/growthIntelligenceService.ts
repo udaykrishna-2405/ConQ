@@ -20,7 +20,7 @@ export interface GrowthForecastRequest {
 
 export interface CompetitorBenchmarkRequest {
   platform: 'youtube' | 'instagram';
-  niche: string;
+  niche?: string;
   followerCount?: number;
   engagementRate?: number;
 }
@@ -242,7 +242,7 @@ export class GrowthIntelligenceService {
       }
     } catch { /* use provided values */ }
 
-    const bench = NICHE_BENCHMARKS[niche.toLowerCase()] || NICHE_BENCHMARKS.default;
+    const bench = NICHE_BENCHMARKS[(niche || 'default').toLowerCase()] || NICHE_BENCHMARKS.default;
 
     const yourMetrics: BenchmarkMetrics = {
       followers: actualFollowers,
