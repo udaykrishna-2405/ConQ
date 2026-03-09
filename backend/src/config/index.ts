@@ -8,9 +8,7 @@ if (isProd && !process.env.JWT_SECRET) {
   throw new Error('JWT_SECRET environment variable is required in production');
 }
 
-if (isProd && !process.env.GEMINI_API_KEY) {
-  throw new Error('GEMINI_API_KEY environment variable is required in production');
-}
+// GEMINI_API_KEY is no longer required — local AI fallback is used instead.
 
 export const config = {
   // Runtime
@@ -20,11 +18,9 @@ export const config = {
   // AWS Region
   region: process.env.AWS_REGION || 'ap-south-1',
 
-  // Gemini AI (replaces Anthropic/Bedrock)
-  gemini: {
-    apiKey: process.env.GEMINI_API_KEY || '',
-    model: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
-    maxTokens: parseInt(process.env.GEMINI_MAX_TOKENS || '4096', 10),
+  // AI mode — always 'local' now (Gemini removed for keyless deployment)
+  ai: {
+    mode: 'local',
   },
 
   // JWT Configuration

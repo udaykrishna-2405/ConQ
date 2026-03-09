@@ -1,8 +1,9 @@
-// AI Client - Gemini-powered Centralized AI Service Layer
-// Provides unified interface for LLM operations across all ConQ modules.
-// Uses Google Gemini 1.5 Flash — fast, cost-effective, free-tier friendly.
+// AI Client — Local Fallback Implementation
+// Gemini SDK removed; all AI responses are generated deterministically
+// by LocalAIService. All public interfaces are preserved so no handler
+// or service file needs to change.
 
-import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
+import { generateText, generateJSON } from '../localAIService';
 
 export interface AIResponse {
   content: string;
@@ -18,30 +19,15 @@ export interface AIMessage {
 }
 
 export class AIClient {
-  private genAI: GoogleGenerativeAI | null = null;
-  private model: GenerativeModel | null = null;
-  private mockMode: boolean;
-  private modelName: string;
+  /** Always false — no external API, no mock mode distinction needed. */
+  private mockMode = true;
 
-  constructor(apiKey?: string, modelName?: string) {
-    const key = apiKey || process.env.GEMINI_API_KEY || '';
-    this.modelName = modelName || process.env.GEMINI_MODEL || 'gemini-1.5-flash';
-    this.mockMode = !key;
-
-    if (!this.mockMode) {
-      this.genAI = new GoogleGenerativeAI(key);
-      this.model = this.genAI.getGenerativeModel({
-        model: this.modelName,
-        generationConfig: {
-          temperature: 1.0,
-          maxOutputTokens: parseInt(process.env.GEMINI_MAX_TOKENS || '4096', 10),
-        },
-      });
-    }
+  constructor(_apiKey?: string, _modelName?: string) {
+    // No-op: credentials are not required with the local fallback.
   }
 
   /**
-   * Generate AI completion with automatic retry and error handling.
+   * Generate AI completion — returns a deterministic local response.
    */
   async generate(
     prompt: string,
@@ -51,46 +37,18 @@ export class AIClient {
       maxTokens?: number;
     }
   ): Promise<AIResponse> {
-    if (this.mockMode) {
-      return this.mockGenerate(prompt);
-    }
+    const fullPrompt = options?.systemPrompt
+      ? `${options.systemPrompt}\n\n${prompt}`
+      : prompt;
 
-    try {
-      const modelToUse = options?.temperature !== undefined || options?.maxTokens !== undefined
-        ? this.genAI!.getGenerativeModel({
-            model: this.modelName,
-            generationConfig: {
-              temperature: options.temperature ?? 1.0,
-              maxOutputTokens: options.maxTokens ?? 4096,
-            },
-          })
-        : this.model!;
-
-      const fullPrompt = options?.systemPrompt
-        ? `${options.systemPrompt}\n\n${prompt}`
-        : prompt;
-
-      const result = await modelToUse.generateContent(fullPrompt);
-      const response = result.response;
-      const text = response.text();
-
-      const usage = response.usageMetadata;
-
-      return {
-        content: text,
-        usage: {
-          inputTokens: usage?.promptTokenCount || 0,
-          outputTokens: usage?.candidatesTokenCount || 0,
-        },
-      };
-    } catch (error: any) {
-      console.error('Gemini AI generation error:', error.message);
-      return this.mockGenerate(prompt);
-    }
+    return {
+      content: generateText(fullPrompt),
+      usage: { inputTokens: 0, outputTokens: 0 },
+    };
   }
 
   /**
-   * Generate structured JSON response with schema validation.
+   * Generate structured JSON response — uses local deterministic analysis.
    */
   async generateJSON<T>(
     prompt: string,
@@ -100,36 +58,15 @@ export class AIClient {
       temperature?: number;
     }
   ): Promise<T> {
-    const fullPrompt = `${prompt}
+    const fullPrompt = options?.systemPrompt
+      ? `${options.systemPrompt}\n\n${prompt}`
+      : prompt;
 
-Return your response as valid JSON matching this schema:
-${schema}
-
-IMPORTANT: Respond with ONLY the JSON object, no markdown fences, no additional text.`;
-
-    const response = await this.generate(fullPrompt, options);
-
-    try {
-      // Strip markdown fences if Gemini wraps in ```json ... ```
-      const cleaned = response.content
-        .replace(/^```(?:json)?\s*/m, '')
-        .replace(/\s*```\s*$/m, '')
-        .trim();
-
-      const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error('No JSON object found in response');
-      }
-      return JSON.parse(jsonMatch[0]) as T;
-    } catch (error) {
-      console.error('JSON parsing error from Gemini response:', error);
-      console.debug('Raw response:', response.content.substring(0, 300));
-      throw new Error('Failed to parse AI response as JSON');
-    }
+    return generateJSON<T>(fullPrompt, schema);
   }
 
   /**
-   * Generate with conversation history (multi-turn chat).
+   * Generate from conversation history — uses the last message as context.
    */
   async generateWithHistory(
     messages: AIMessage[],
@@ -139,55 +76,11 @@ IMPORTANT: Respond with ONLY the JSON object, no markdown fences, no additional 
       maxTokens?: number;
     }
   ): Promise<AIResponse> {
-    if (this.mockMode || !this.genAI) {
-      return this.mockGenerate(messages[messages.length - 1]?.content || '');
-    }
-
-    try {
-      const chatModel = this.genAI.getGenerativeModel({
-        model: this.modelName,
-        systemInstruction: options?.systemPrompt,
-        generationConfig: {
-          temperature: options?.temperature ?? 1.0,
-          maxOutputTokens: options?.maxTokens ?? 4096,
-        },
-      });
-
-      const chat = chatModel.startChat({
-        history: messages.slice(0, -1).map(m => ({
-          role: m.role === 'user' ? 'user' : 'model',
-          parts: [{ text: m.content }],
-        })),
-      });
-
-      const lastMessage = messages[messages.length - 1].content;
-      const result = await chat.sendMessage(lastMessage);
-      const response = result.response;
-
-      return {
-        content: response.text(),
-        usage: {
-          inputTokens: response.usageMetadata?.promptTokenCount || 0,
-          outputTokens: response.usageMetadata?.candidatesTokenCount || 0,
-        },
-      };
-    } catch (error: any) {
-      console.error('Gemini chat generation error:', error.message);
-      return this.mockGenerate(messages[messages.length - 1]?.content || '');
-    }
+    const lastContent = messages[messages.length - 1]?.content || '';
+    return this.generate(lastContent, options);
   }
 
-  /**
-   * Mock generation for development/testing without API key.
-   */
-  private mockGenerate(prompt: string): AIResponse {
-    return {
-      content: `[Mock AI Response — set GEMINI_API_KEY to enable real AI. Prompt preview: ${prompt.substring(0, 80)}...]`,
-      usage: { inputTokens: 0, outputTokens: 0 },
-    };
-  }
-
-  /** Check if client is running in mock mode (no API key). */
+  /** Always true — client runs in local mode without an API key. */
   isMockMode(): boolean {
     return this.mockMode;
   }

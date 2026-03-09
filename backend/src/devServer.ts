@@ -208,7 +208,7 @@ app.get('/health', (_req, res) => {
     timestamp: new Date().toISOString(),
     version: '1.0.0',
     environment: process.env.NODE_ENV || 'development',
-    aiMode: process.env.GEMINI_API_KEY ? 'gemini-live' : 'mock',
+    aiMode: 'local',
   });
 });
 
@@ -227,7 +227,7 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 // ── Start Server ──
 app.listen(PORT, () => {
   console.log(`\n🚀 ConQ Backend Dev Server running at http://localhost:${PORT}`);
-  console.log(`🤖 AI Mode: ${process.env.GEMINI_API_KEY ? 'Gemini Live ✅' : 'Mock (set GEMINI_API_KEY to enable) ⚠️'}`);
+  console.log(`🤖 AI Mode: local (no external API key required)`);
   console.log(`🛡️  Security: helmet, CORS, rate limiting, 64kb body limit`);
   console.log(`\n📍 Core Routes:`);
   console.log(`   POST /auth/login | POST /auth/register`);
