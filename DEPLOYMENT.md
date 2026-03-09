@@ -1,3 +1,161 @@
+# ConQ — Deployment Guide
+
+---
+
+## 🚀 Quick Deploy (Vercel + Render)
+
+This is the recommended path for college evaluation / public demo.
+
+```
+Frontend (Vercel) → Backend (Render) → ML Service (Render)
+```
+
+### Architecture
+
+```
+User Browser
+    │
+    ▼
+Vercel (frontend)
+    │  REACT_APP_API_BASE_URL
+    ▼
+Render (backend – Node/Express)
+    │  calls ML service when needed
+    ▼
+Render (ml – Python/Flask)
+```
+
+---
+
+### 1. Deploy the ML Service on Render
+
+1. Go to [https://render.com](https://render.com) and create a **New → Web Service**.
+2. Connect your GitHub repo.
+3. Fill in the settings:
+
+| Setting         | Value                              |
+|-----------------|------------------------------------|
+| Root Directory  | `ml`                               |
+| Runtime         | `Python 3`                         |
+| Build Command   | `pip install -r requirements.txt`  |
+| Start Command   | `python app.py`                    |
+
+4. Add environment variable: *(none required for the stub — add model-specific keys later)*
+5. Click **Create Web Service**. Note the public URL, e.g. `https://conq-ml.onrender.com`.
+
+---
+
+### 2. Deploy the Backend on Render
+
+1. Create another **New → Web Service** on Render.
+2. Connect your GitHub repo (same repo, different root directory).
+3. Fill in the settings:
+
+| Setting         | Value             |
+|-----------------|-------------------|
+| Root Directory  | `backend`         |
+| Runtime         | `Node`            |
+| Build Command   | `npm install --include=dev` |
+| Start Command   | `npm start`       |
+
+4. Add environment variables (set in Render's **Environment** tab):
+
+```
+NODE_ENV=production
+PORT=10000                        # Render sets this automatically
+JWT_SECRET=<min 64 char random>
+JWT_EXPIRES_IN=1h
+JWT_REFRESH_EXPIRES_IN=7d
+GEMINI_API_KEY=<your Gemini key>
+GEMINI_MODEL=gemini-1.5-flash
+ALLOWED_ORIGINS=https://YOUR_VERCEL_APP_URL.vercel.app
+DYNAMODB_USERS_TABLE=conq-users
+DYNAMODB_CONTENT_TABLE=conq-content
+# ... add remaining tables from backend/.env.example
+```
+
+5. Click **Create Web Service**. Note the public URL, e.g. `https://conq-backend.onrender.com`.
+
+---
+
+### 3. Deploy the Frontend on Vercel
+
+1. Go to [https://vercel.com](https://vercel.com) and import your GitHub repo.
+2. Set the **Root Directory** to `frontend`.
+3. Vercel auto-detects Create React App — keep defaults.
+4. Add an environment variable:
+
+| Key                       | Value                                      |
+|---------------------------|--------------------------------------------|
+| `REACT_APP_API_BASE_URL`  | `https://conq-backend.onrender.com`        |
+
+5. Click **Deploy**. Your public URL will be `https://conq-frontend.vercel.app` (or custom domain).
+
+> [!IMPORTANT]
+> After Vercel gives you the frontend URL, go back to the Render backend and update
+> `ALLOWED_ORIGINS` to match it, then redeploy the backend.
+
+---
+
+### 4. Verify Everything Works
+
+```bash
+# ML Service health
+curl https://conq-ml.onrender.com/
+# → {"status":"ML service running","joblib_available":true}
+
+# Backend health
+curl https://conq-backend.onrender.com/health
+# → {"status":"ok","environment":"production",...}
+
+# Open the frontend in your browser
+open https://conq-frontend.vercel.app
+```
+
+---
+
+### Environment Variable Reference
+
+**Frontend** (`frontend/.env` for local dev, Vercel dashboard for production):
+
+| Variable                  | Description                              | Default                     |
+|---------------------------|------------------------------------------|-----------------------------|
+| `REACT_APP_API_BASE_URL`  | Backend URL                              | `http://localhost:3001`     |
+
+**Backend** (`backend/.env` for local dev, Render dashboard for production):
+
+See `backend/.env.example` for the full list. Critical ones for Render:
+
+| Variable         | Description                                  |
+|------------------|----------------------------------------------|
+| `JWT_SECRET`     | 64+ char random string — generate with `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"` |
+| `GEMINI_API_KEY` | From [https://aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) |
+| `ALLOWED_ORIGINS`| Comma-separated list of allowed frontend URLs |
+
+---
+
+## 💻 Local Development
+
+```bash
+# From repo root
+npm run dev
+# Backend: http://localhost:3001
+# Frontend: http://localhost:3000
+```
+
+> [!IMPORTANT]
+> Create `backend/.env` from `backend/.env.example` and set `GEMINI_API_KEY` before starting.
+
+```bash
+# ML service (separate terminal)
+cd ml
+pip install -r requirements.txt
+python app.py
+# → http://localhost:8000
+```
+
+---
+
 # ConQ — AWS Deployment Guide
 
 ## Architecture Overview

@@ -4,6 +4,7 @@
   "private": true,
   "description": "ConQ – AI Creator Intelligence Platform Backend (AWS Lambda + Express Dev Server)",
   "scripts": {
+    "start": "node server.js",
     "build": "tsc",
     "dev": "ts-node src/devServer.ts",
     "test": "jest --coverage",
